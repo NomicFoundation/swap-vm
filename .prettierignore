@@ -1,0 +1,12 @@
+node_modules
+out
+cache
+artifacts
+broadcast
+lib
+coverage
+coverage.json
+build
+.coverage_contracts
+.coverage_artifacts
+ignition/deployments
