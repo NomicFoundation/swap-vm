@@ -25,17 +25,12 @@ library ExactInOutSymmetry {
         uint256 tolerance
     ) internal view {
         // ExactIn: amountIn → ?
-        (, uint256 amountOut,) = swapVM.asView().quote(
-            order, tokenIn, tokenOut, amountIn, takerDataExactIn
-        );
+        (, uint256 amountOut, ) = swapVM.asView().quote(order, tokenIn, tokenOut, amountIn, takerDataExactIn);
 
         // ExactOut: ? → amountOut
-        (uint256 amountInBack,,) = swapVM.asView().quote(
-            order, tokenIn, tokenOut, amountOut, takerDataExactOut
-        );
+        (uint256 amountInBack, , ) = swapVM.asView().quote(order, tokenIn, tokenOut, amountOut, takerDataExactOut);
 
-        uint256 diff = amountInBack > amountIn ?
-            amountInBack - amountIn : amountIn - amountInBack;
+        uint256 diff = amountInBack > amountIn ? amountInBack - amountIn : amountIn - amountInBack;
 
         if (diff > tolerance) {
             revert AsymmetryDetected(amountIn, amountInBack, diff);
@@ -54,8 +49,14 @@ library ExactInOutSymmetry {
     ) internal view {
         for (uint256 i = 0; i < amounts.length; i++) {
             assertSymmetry(
-                swapVM, order, tokenIn, tokenOut, amounts[i],
-                takerDataExactIn, takerDataExactOut, tolerance
+                swapVM,
+                order,
+                tokenIn,
+                tokenOut,
+                amounts[i],
+                takerDataExactIn,
+                takerDataExactOut,
+                tolerance
             );
         }
     }

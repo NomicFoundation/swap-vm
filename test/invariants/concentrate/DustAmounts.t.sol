@@ -59,8 +59,8 @@ contract DustAmounts is ConcentrateXYCFeesInvariants {
         _computeInitialBalances();
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        flatFeeInBps = 0.003e9; // 0.3%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Test ONLY dust amounts (10-1000 wei)
         // Note: 1 wei excluded - causes amountOut=0 due to quantization
@@ -76,21 +76,20 @@ contract DustAmounts is ConcentrateXYCFeesInvariants {
 
         // ExactOut: we request specific output
         testAmountsExactOut = new uint256[](6);
-        testAmountsExactOut[0] = 1;       // 1 wei
-        testAmountsExactOut[1] = 10;      // 10 wei
-        testAmountsExactOut[2] = 100;     // 100 wei
-        testAmountsExactOut[3] = 1000;    // 1000 wei
-        testAmountsExactOut[4] = 10000;   // 10000 wei
-        testAmountsExactOut[5] = 100000;  // 100000 wei
+        testAmountsExactOut[0] = 1; // 1 wei
+        testAmountsExactOut[1] = 10; // 10 wei
+        testAmountsExactOut[2] = 100; // 100 wei
+        testAmountsExactOut[3] = 1000; // 1000 wei
+        testAmountsExactOut[4] = 10000; // 10000 wei
+        testAmountsExactOut[5] = 100000; // 100000 wei
 
         // Minimal tolerances
-        symmetryTolerance = 1;      // 1 wei
+        symmetryTolerance = 1; // 1 wei
         additivityTolerance = 0;
 
         // Monotonicity: 100% tolerance for dust amounts
         // Reason: Fee rounding (ceil) creates monotonicity violations
         // This is SAFE: gas costs >> any arbitrage profit (500 trillion:1 loss ratio)
         monotonicityToleranceBps = 15000; // 150%
-
     }
 }

@@ -32,33 +32,33 @@ contract MicroAmounts is ConcentrateXYCFeesInvariants {
         _computeInitialBalances();
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        flatFeeInBps = 0.003e9; // 0.3%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Test micro amounts (2000 wei to 1 billion wei)
         // Start at 2000 to avoid dust threshold (≤1000 wei)
         testAmounts = new uint256[](8);
-        testAmounts[0] = 2000;       // 2000 wei
-        testAmounts[1] = 5000;       // 5000 wei
-        testAmounts[2] = 10000;      // 10000 wei
-        testAmounts[3] = 100000;     // 100000 wei
-        testAmounts[4] = 1000000;    // 1000000 wei
-        testAmounts[5] = 10000000;   // 10000000 wei
-        testAmounts[6] = 100000000;  // 100000000 wei
+        testAmounts[0] = 2000; // 2000 wei
+        testAmounts[1] = 5000; // 5000 wei
+        testAmounts[2] = 10000; // 10000 wei
+        testAmounts[3] = 100000; // 100000 wei
+        testAmounts[4] = 1000000; // 1000000 wei
+        testAmounts[5] = 10000000; // 10000000 wei
+        testAmounts[6] = 100000000; // 100000000 wei
         testAmounts[7] = 1000000000; // 1000000000 wei
 
         // ExactOut: we request specific output
         testAmountsExactOut = new uint256[](6);
-        testAmountsExactOut[0] = 1;       // 1 wei
-        testAmountsExactOut[1] = 10;      // 10 wei
-        testAmountsExactOut[2] = 100;     // 100 wei
-        testAmountsExactOut[3] = 1000;    // 1000 wei
-        testAmountsExactOut[4] = 10000;   // 10000 wei
-        testAmountsExactOut[5] = 100000;  // 100000 wei
+        testAmountsExactOut[0] = 1; // 1 wei
+        testAmountsExactOut[1] = 10; // 10 wei
+        testAmountsExactOut[2] = 100; // 100 wei
+        testAmountsExactOut[3] = 1000; // 1000 wei
+        testAmountsExactOut[4] = 10000; // 10000 wei
+        testAmountsExactOut[5] = 100000; // 100000 wei
 
         // Minimal tolerances
-        symmetryTolerance = 2;      // 2 wei
-        additivityTolerance = 0;    // 0 wei
+        symmetryTolerance = 2; // 2 wei
+        additivityTolerance = 0; // 0 wei
 
         // Monotonicity: dust amounts violate due to rounding
         monotonicityToleranceBps = 4;

@@ -216,8 +216,8 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
             console.log("Gas cost (wei):", gasCostWei);
 
             // Binary search for minimum profitable swap size
-            uint256 low = 1e18;      // 1 token
-            uint256 high = BALANCE;  // 1000 tokens
+            uint256 low = 1e18; // 1 token
+            uint256 high = BALANCE; // 1000 tokens
             uint256 minProfitable = 0;
 
             while (low <= high) {
@@ -229,7 +229,7 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
                     minProfitable = mid;
                     high = mid - 1e17; // Decrease by 0.1 token
                 } else {
-                    low = mid + 1e17;  // Increase by 0.1 token
+                    low = mid + 1e17; // Increase by 0.1 token
                 }
 
                 // Prevent infinite loop
@@ -297,11 +297,11 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
             ISwapVM.Order memory order = _createOrderWithFlatFeeIn();
             bytes memory takerData = _signAndPackTakerData(order, true, 0);
 
-            (,uint256 singleOut) = _quoteSwap(order, swapAmount, takerData);
+            (, uint256 singleOut) = _quoteSwap(order, swapAmount, takerData);
 
             _executeSwap(order, swapAmount / 2, takerData);
             uint256 split1Out = _getLastSwapOut();
-            (,uint256 split2Out) = _quoteSwap(order, swapAmount / 2, takerData);
+            (, uint256 split2Out) = _quoteSwap(order, swapAmount / 2, takerData);
 
             uint256 splitTotalOut = split1Out + split2Out;
 
@@ -321,11 +321,11 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
             ISwapVM.Order memory order = _createOrderWithFlatFeeOut();
             bytes memory takerData = _signAndPackTakerData(order, true, 0);
 
-            (,uint256 singleOut) = _quoteSwap(order, swapAmount, takerData);
+            (, uint256 singleOut) = _quoteSwap(order, swapAmount, takerData);
 
             _executeSwap(order, swapAmount / 2, takerData);
             uint256 split1Out = _getLastSwapOut();
-            (,uint256 split2Out) = _quoteSwap(order, swapAmount / 2, takerData);
+            (, uint256 split2Out) = _quoteSwap(order, swapAmount / 2, takerData);
 
             uint256 splitTotalOut = split1Out + split2Out;
 
@@ -351,11 +351,10 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
     function _createOrderWithFlatFeeOut() private view returns (ISwapVM.Order memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE, BALANCE])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE, BALANCE]))
+            ),
             program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(FEE_BPS)),
             program.build(_xycSwapXD)
         );
@@ -365,11 +364,10 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
     function _createOrderWithFlatFeeIn() private view returns (ISwapVM.Order memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE, BALANCE])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE, BALANCE]))
+            ),
             program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(FEE_BPS)),
             program.build(_xycSwapXD)
         );
@@ -377,26 +375,29 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
     }
 
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -410,27 +411,29 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }
@@ -440,27 +443,11 @@ contract FeeOutAdditivityViolation is Test, OpcodesDebug {
         uint256 amount,
         bytes memory takerData
     ) private view returns (uint256 amountIn, uint256 amountOut) {
-        (amountIn, amountOut,) = swapVM.asView().quote(
-            order,
-            address(tokenA),
-            address(tokenB),
-            amount,
-            takerData
-        );
+        (amountIn, amountOut, ) = swapVM.asView().quote(order, address(tokenA), address(tokenB), amount, takerData);
     }
 
-    function _executeSwap(
-        ISwapVM.Order memory order,
-        uint256 amount,
-        bytes memory takerData
-    ) private {
-        (,uint256 amountOut,) = swapVM.swap(
-            order,
-            address(tokenA),
-            address(tokenB),
-            amount,
-            takerData
-        );
+    function _executeSwap(ISwapVM.Order memory order, uint256 amount, bytes memory takerData) private {
+        (, uint256 amountOut, ) = swapVM.swap(order, address(tokenA), address(tokenB), amount, takerData);
         _lastSwapOut = amountOut;
     }
 }

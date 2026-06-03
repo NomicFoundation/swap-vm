@@ -43,8 +43,8 @@ contract TinyLiquidity is ConcentrateXYCFeesInvariants {
         _computeInitialBalances();
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        flatFeeInBps = 0.003e9; // 0.3%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Test amounts where monotonicity holds (> 0.1% of pool)
         testAmounts = new uint256[](3);

@@ -48,11 +48,7 @@ contract BestRouteSelector is OpcodesDebug {
         SwapRegisters calldata swap,
         bytes calldata args,
         bytes calldata takerData
-    ) external returns (
-        uint256 updatedNextPC,
-        uint256 choppedLength,
-        SwapRegisters memory updatedSwap
-    ) {
+    ) external returns (uint256 updatedNextPC, uint256 choppedLength, SwapRegisters memory updatedSwap) {
         // Args format: [numBranches:uint8, len1:uint16, strategy1:bytes, len2:uint16, strategy2:bytes, ...]
         require(args.length >= 1, BestRouteSelectorInvalidArgs());
 
@@ -84,13 +80,13 @@ contract BestRouteSelector is OpcodesDebug {
             Context memory ctx = Context({
                 vm: VM({
                     isStaticContext: isStaticContext,
-                    nextPC: 0,  // Start from beginning of strategy
+                    nextPC: 0, // Start from beginning of strategy
                     programPtr: CalldataPtrLib.from(strategy),
                     takerArgsPtr: CalldataPtrLib.from(takerData),
                     opcodes: _opcodes()
                 }),
                 query: query,
-                swap: swap  // Reset to initial balances for each strategy!
+                swap: swap // Reset to initial balances for each strategy!
             });
 
             // Execute this strategy

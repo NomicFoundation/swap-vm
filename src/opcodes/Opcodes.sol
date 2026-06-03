@@ -45,7 +45,12 @@ contract Opcodes is
 
     function _notInstruction(Context memory /* ctx */, bytes calldata /* args */) internal view {}
 
-    function _opcodes() internal pure virtual returns (function(Context memory, bytes calldata) internal[] memory result) {
+    function _opcodes()
+        internal
+        pure
+        virtual
+        returns (function(Context memory, bytes calldata) internal[] memory result)
+    {
         function(Context memory, bytes calldata) internal[47] memory instructions = [
             _notInstruction,
             // Debug - reserved for debugging utilities (core infrastructure)

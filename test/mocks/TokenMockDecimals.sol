@@ -10,11 +10,7 @@ import { TokenMock } from "@1inch/solidity-utils/contracts/mocks/TokenMock.sol";
 contract TokenMockDecimals is TokenMock {
     uint8 private immutable _decimals;
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint8 decimals_
-    ) TokenMock(name, symbol) {
+    constructor(string memory name, string memory symbol, uint8 decimals_) TokenMock(name, symbol) {
         _decimals = decimals_;
     }
 

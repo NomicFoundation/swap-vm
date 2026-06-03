@@ -6,7 +6,6 @@ pragma solidity 0.8.30;
 
 import { XYCFeesInvariants } from "../XYCFeesInvariants.t.sol";
 
-
 /**
  * @title BalancedPoolEdgeFees
  * @notice Tests XYC + fees with balanced pool and edge case fee values
@@ -21,11 +20,11 @@ contract BalancedPoolEdgeFees is XYCFeesInvariants {
         balanceB = 1000e18;
 
         // Edge case fees - near maximum allowed
-        flatFeeInBps = 0.999e9;        // 99.9% (near max)
-        flatFeeOutBps = 0.001e9;       // 0.1% (near min meaningful)
-        progressiveFeeInBps = 0.5e9;   // 50%
-        progressiveFeeOutBps = 0.5e9;  // 50%
-        protocolFeeOutBps = 0.1e9;     // 10%
+        flatFeeInBps = 0.999e9; // 99.9% (near max)
+        flatFeeOutBps = 0.001e9; // 0.1% (near min meaningful)
+        progressiveFeeInBps = 0.5e9; // 50%
+        progressiveFeeOutBps = 0.5e9; // 50%
+        protocolFeeOutBps = 0.1e9; // 10%
 
         // Standard test amounts for exactIn
         testAmounts = new uint256[](3);
@@ -35,9 +34,9 @@ contract BalancedPoolEdgeFees is XYCFeesInvariants {
 
         // Small exactOut amounts (99.9% fee requires 1000x input)
         testAmountsExactOut = new uint256[](3);
-        testAmountsExactOut[0] = 0.1e18;  // Requires ~100e18 input
-        testAmountsExactOut[1] = 0.5e18;  // Requires ~500e18 input
-        testAmountsExactOut[2] = 1e18;    // Requires ~1000e18 input
+        testAmountsExactOut[0] = 0.1e18; // Requires ~100e18 input
+        testAmountsExactOut[1] = 0.5e18; // Requires ~500e18 input
+        testAmountsExactOut[2] = 1e18; // Requires ~1000e18 input
 
         // Allow 1-wei rounding
         additivityTolerance = 1;

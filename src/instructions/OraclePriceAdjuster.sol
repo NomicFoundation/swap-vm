@@ -31,20 +31,12 @@ library OraclePriceAdjusterArgsBuilder {
         address oracleAddress
     ) internal pure returns (bytes memory) {
         require(maxPriceDecay < 1e18, OrcaclePriceAdjustedMaxPriceDecayShouldBeLessThanOneE18(maxPriceDecay));
-        return abi.encodePacked(
-            maxPriceDecay,
-            maxStaleness,
-            oracleDecimals,
-            oracleAddress
-        );
+        return abi.encodePacked(maxPriceDecay, maxStaleness, oracleDecimals, oracleAddress);
     }
 
-    function parse(bytes calldata args) internal pure returns (
-        uint64 maxPriceDecay,
-        uint16 maxStaleness,
-        uint8 oracleDecimals,
-        address oracleAddress
-    ) {
+    function parse(
+        bytes calldata args
+    ) internal pure returns (uint64 maxPriceDecay, uint16 maxStaleness, uint8 oracleDecimals, address oracleAddress) {
         maxPriceDecay = uint64(bytes8(args.slice(0, 8, OraclePriceAdjusterMissingMaxPriceDecayArg.selector)));
         maxStaleness = uint16(bytes2(args.slice(8, 10, OraclePriceAdjusterMissingMaxStalenessArg.selector)));
         oracleDecimals = uint8(bytes1(args.slice(10, 11, OraclePriceAdjusterMissingOracleDecimalsArg.selector)));
@@ -101,7 +93,10 @@ contract OraclePriceAdjuster {
 
         // Check if oracle data is fresh using configured staleness threshold
         // If maxStaleness is 0, skip the staleness check
-        require(maxStaleness == 0 || block.timestamp <= updatedAt + maxStaleness, OraclePriceAdjusterOraclePriceStale(block.timestamp, updatedAt, maxStaleness));
+        require(
+            maxStaleness == 0 || block.timestamp <= updatedAt + maxStaleness,
+            OraclePriceAdjusterOraclePriceStale(block.timestamp, updatedAt, maxStaleness)
+        );
 
         // If oracleDecimals is 0, fetch from oracle (backward compatibility)
         if (oracleDecimals == 0) {
@@ -111,9 +106,9 @@ contract OraclePriceAdjuster {
         // Convert oracle price to 1e18 scale using provided decimals
         uint256 oraclePrice = answer.toUint256();
         if (oracleDecimals < 18) {
-            oraclePrice = oraclePrice * 10**(18 - oracleDecimals);
+            oraclePrice = oraclePrice * 10 ** (18 - oracleDecimals);
         } else if (oracleDecimals > 18) {
-            oraclePrice = oraclePrice / 10**(oracleDecimals - 18);
+            oraclePrice = oraclePrice / 10 ** (oracleDecimals - 18);
         }
 
         // Calculate current swap price (token0 per token1)

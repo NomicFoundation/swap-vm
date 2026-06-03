@@ -23,7 +23,7 @@ library PeggedSwapMath {
         uint256 sqrtU = Math.sqrt(u * ONE);
         uint256 sqrtV = Math.sqrt(v * ONE);
         // a * (u + v) / ONE - safe: a ≤ 2e27, u+v ≤ 2e27 → 4e54 < 1e77
-        uint256 linearTerm = a * (u + v) / ONE;
+        uint256 linearTerm = (a * (u + v)) / ONE;
         return sqrtU + sqrtV + linearTerm;
     }
 
@@ -42,8 +42,8 @@ library PeggedSwapMath {
         uint256 a
     ) internal pure returns (uint256) {
         // x * ONE / x0 - safe: x ≤ 1e24 (huge reserve), ONE = 1e27 → 1e51 < 1e77
-        uint256 u = x * ONE / x0;
-        uint256 v = y * ONE / y0;
+        uint256 u = (x * ONE) / x0;
+        uint256 v = (y * ONE) / y0;
         return invariant(u, v, a);
     }
 
@@ -61,7 +61,7 @@ library PeggedSwapMath {
         uint256 sqrtU = Math.sqrt(u * ONE);
 
         // a * u / ONE - safe: a ≤ 2e27, u ≤ 2e27 → 4e54 < 1e77
-        uint256 au = a * u / ONE;
+        uint256 au = (a * u) / ONE;
 
         // Calculate rightSide = c - √u - au
         // Need to check: invariantC >= sqrtU + au
@@ -93,7 +93,7 @@ library PeggedSwapMath {
         // This form is stable for all values of a, including when a → 0.
 
         // 4 * a * rightSide / ONE - safe: 4a ≤ 8e27, rightSide ≤ 2e27 → 16e54 < 1e77
-        uint256 fourARightSide = 4 * a * rightSide / ONE;
+        uint256 fourARightSide = (4 * a * rightSide) / ONE;
 
         uint256 discriminant = ONE + fourARightSide;
 
@@ -103,10 +103,9 @@ library PeggedSwapMath {
 
         uint256 denominator = ONE + sqrtDiscriminant;
 
-        uint256 w = 2 * rightSide * ONE / denominator;
+        uint256 w = (2 * rightSide * ONE) / denominator;
 
         // w² / ONE - safe: w ≤ 2e27 → 4e54 < 1e77
-        v = w * w / ONE;
+        v = (w * w) / ONE;
     }
-
 }

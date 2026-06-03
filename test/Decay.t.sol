@@ -90,35 +90,37 @@ contract DecayTest is Test, OpcodesDebug {
     function createDecayOrder() internal returns (ISwapVM.Order memory order, bytes memory signature) {
         Program memory p = ProgramBuilder.init(_opcodes());
         bytes memory programBytes = bytes.concat(
-            p.build(Balances._dynamicBalancesXD,
-                BalancesArgsBuilder.build(dynamic([tokenA, tokenB]), dynamic([INITIAL_LIQUIDITY, INITIAL_LIQUIDITY]))),
-            p.build(Decay._decayXD,
-                DecayArgsBuilder.build(DECAY_PERIOD)),
+            p.build(
+                Balances._dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([tokenA, tokenB]), dynamic([INITIAL_LIQUIDITY, INITIAL_LIQUIDITY]))
+            ),
+            p.build(Decay._decayXD, DecayArgsBuilder.build(DECAY_PERIOD)),
             p.build(XYCSwap._xycSwapXD, ""),
-            p.build(Controls._salt,
-                ControlsArgsBuilder.buildSalt(uint32(0x1000 + orderNonce++)))
+            p.build(Controls._salt, ControlsArgsBuilder.buildSalt(uint32(0x1000 + orderNonce++)))
         );
 
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: programBytes
-        }));
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: programBytes
+            })
+        );
 
         bytes32 orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
@@ -135,36 +137,32 @@ contract DecayTest is Test, OpcodesDebug {
         address tokenOut,
         uint256 amountIn
     ) internal returns (uint256 actualAmountIn, uint256 actualAmountOut) {
-        bytes memory takerData = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: trader,
-            isExactIn: true,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: true,
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerData = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: trader,
+                isExactIn: true,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: true,
+                useTransferFromAndAquaPush: false,
+                threshold: "",
+                to: address(0),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         vm.prank(trader);
-        (actualAmountIn, actualAmountOut,) = swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amountIn,
-            takerData
-        );
+        (actualAmountIn, actualAmountOut, ) = swapVM.swap(order, tokenIn, tokenOut, amountIn, takerData);
 
         return (actualAmountIn, actualAmountOut);
     }
@@ -215,14 +213,7 @@ contract DecayTest is Test, OpcodesDebug {
         executeSwap(trader1, order2, signature2, address(tokenA), address(tokenB), STANDARD_SWAP);
 
         // Opposite direction B->A
-        (, uint256 outOpp) = executeSwap(
-            trader2,
-            order2,
-            signature2,
-            address(tokenB),
-            address(tokenA),
-            50e18
-        );
+        (, uint256 outOpp) = executeSwap(trader2, order2, signature2, address(tokenB), address(tokenA), 50e18);
 
         // Normal expected without decay: out = 50 * 1100 / (909 + 50) = 57.35...
         uint256 expectedNormal = (uint256(50e18) * 1100) / 959;
@@ -290,7 +281,7 @@ contract DecayTest is Test, OpcodesDebug {
 
         // After full decay, should be close to normal AMM rate
         // Strategy state has changed, but rate should be significantly better
-        assertTrue(rateFull > rateImmediate * 11 / 10, "Full decay rate should be >10% better than immediate");
+        assertTrue(rateFull > (rateImmediate * 11) / 10, "Full decay rate should be >10% better than immediate");
     }
 
     // Test 3: MEV Protection (Sandwich Attack)
@@ -310,14 +301,7 @@ contract DecayTest is Test, OpcodesDebug {
         );
 
         // Victim swaps A->B (same direction, no penalty)
-        (, uint256 victimOut) = executeSwap(
-            trader1,
-            order,
-            signature,
-            address(tokenA),
-            address(tokenB),
-            50e18
-        );
+        (, uint256 victimOut) = executeSwap(trader1, order, signature, address(tokenA), address(tokenB), 50e18);
 
         // Verify victim gets reasonable rate (no penalty for same direction)
         // After 200 swap: strategy is ~1200:833

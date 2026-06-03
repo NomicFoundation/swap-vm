@@ -86,37 +86,45 @@ contract SwapVMTest is Test, OpcodesDebug {
         tokenB.approve(address(swapVM), type(uint256).max);
     }
 
-    function _createOrder(MakerSetup memory setup) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
+    function _createOrder(
+        MakerSetup memory setup
+    ) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
         Program memory p = ProgramBuilder.init(_opcodes());
         bytes memory programBytes = bytes.concat(
-            p.build(Balances._staticBalancesXD,
-                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([setup.balanceA, setup.balanceB]))),
-            p.build(LimitSwap._limitSwap1D,
-                LimitSwapArgsBuilder.build(setup.tokenIn, setup.tokenOut)),
+            p.build(
+                Balances._staticBalancesXD,
+                BalancesArgsBuilder.build(
+                    dynamic([address(tokenA), address(tokenB)]),
+                    dynamic([setup.balanceA, setup.balanceB])
+                )
+            ),
+            p.build(LimitSwap._limitSwap1D, LimitSwapArgsBuilder.build(setup.tokenIn, setup.tokenOut)),
             setup.useInvalidator ? p.build(Invalidators._invalidateTokenOut1D) : bytes(""),
             setup.salt != 0 ? p.build(Controls._salt, ControlsArgsBuilder.buildSalt(uint64(setup.salt))) : bytes("")
         );
 
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: programBytes
-        }));
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: programBytes
+            })
+        );
 
         bytes32 orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
@@ -149,15 +157,7 @@ contract SwapVMTest is Test, OpcodesDebug {
         bytes32 orderHash = swapVM.hash(order);
         vm.expectEmit(true, true, true, true, address(swapVM));
         // Specify expected event parameters (Foundry will verify contract emits this)
-        emit SwapVM.Swapped(
-            orderHash,
-            maker,
-            taker,
-            tokenIn,
-            tokenOut,
-            expectedAmountIn,
-            expectedAmountOut
-        );
+        emit SwapVM.Swapped(orderHash, maker, taker, tokenIn, tokenOut, expectedAmountIn, expectedAmountOut);
     }
 
     function _executeSwap(
@@ -188,10 +188,7 @@ contract SwapVMTest is Test, OpcodesDebug {
     }
 
     function _getBalances() internal view returns (BalanceSnapshot memory) {
-        return BalanceSnapshot({
-            takerTokenA: tokenA.balanceOf(taker),
-            takerTokenB: tokenB.balanceOf(taker)
-        });
+        return BalanceSnapshot({ takerTokenA: tokenA.balanceOf(taker), takerTokenB: tokenB.balanceOf(taker) });
     }
 
     function _verifySwap(
@@ -205,8 +202,16 @@ contract SwapVMTest is Test, OpcodesDebug {
 
         assertEq(result.amountIn, expectedIn, string(abi.encodePacked(message, ": incorrect amountIn")));
         assertEq(result.amountOut, expectedOut, string(abi.encodePacked(message, ": incorrect amountOut")));
-        assertEq(afterSwap.takerTokenA - before.takerTokenA, expectedOut, string(abi.encodePacked(message, ": incorrect TokenA received")));
-        assertEq(before.takerTokenB - afterSwap.takerTokenB, expectedIn, string(abi.encodePacked(message, ": incorrect TokenB spent")));
+        assertEq(
+            afterSwap.takerTokenA - before.takerTokenA,
+            expectedOut,
+            string(abi.encodePacked(message, ": incorrect TokenA received"))
+        );
+        assertEq(
+            before.takerTokenB - afterSwap.takerTokenB,
+            expectedIn,
+            string(abi.encodePacked(message, ": incorrect TokenB spent"))
+        );
     }
 
     function _verifySwapWithOrderHash(
@@ -220,7 +225,6 @@ contract SwapVMTest is Test, OpcodesDebug {
         _verifySwap(result, before, expectedIn, expectedOut, message);
         assertEq(result.orderHash, expectedOrderHash, string(abi.encodePacked(message, ": incorrect orderHash")));
     }
-
 
     function test_LimitSwapWithTokenOutInvalidator() public {
         // === Setup ===
@@ -300,7 +304,7 @@ contract SwapVMTest is Test, OpcodesDebug {
             balanceB: 200e18,
             tokenIn: address(tokenB),
             tokenOut: address(tokenA),
-            useInvalidator: false,  // NO INVALIDATOR - order can be filled multiple times!
+            useInvalidator: false, // NO INVALIDATOR - order can be filled multiple times!
             salt: 0
         });
         (ISwapVM.Order memory order, bytes memory signature) = _createOrder(setup);
@@ -360,10 +364,10 @@ contract SwapVMTest is Test, OpcodesDebug {
             expectedOrderHash,
             maker,
             taker,
-            address(tokenB),  // tokenIn
-            address(tokenA),  // tokenOut
-            100e18,           // amountIn
-            50e18             // amountOut
+            address(tokenB), // tokenIn
+            address(tokenA), // tokenOut
+            100e18, // amountIn
+            50e18 // amountOut
         );
 
         vm.prank(taker);

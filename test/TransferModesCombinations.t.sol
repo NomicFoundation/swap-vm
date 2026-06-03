@@ -78,8 +78,12 @@ contract TransferModesCombinationsTest is Test {
 
         // Execute swap
         vm.prank(taker);
-        (uint256 amountIn, uint256 amountOut,) = router.swap(
-            order, address(tokenB), address(tokenA), SWAP_AMOUNT, takerData
+        (uint256 amountIn, uint256 amountOut, ) = router.swap(
+            order,
+            address(tokenB),
+            address(tokenA),
+            SWAP_AMOUNT,
+            takerData
         );
 
         _verifySwapResults(amountIn, amountOut, taker, true);
@@ -104,7 +108,11 @@ contract TransferModesCombinationsTest is Test {
 
         // Execute swap via taker contract
         (uint256 amountIn, uint256 amountOut) = takerContract.swap(
-            order, address(tokenB), address(tokenA), SWAP_AMOUNT, takerData
+            order,
+            address(tokenB),
+            address(tokenA),
+            SWAP_AMOUNT,
+            takerData
         );
 
         _verifySwapResults(amountIn, amountOut, address(takerContract), true);
@@ -127,7 +135,12 @@ contract TransferModesCombinationsTest is Test {
 
         // Create signed order
         (ISwapVM.Order memory order, bytes memory signature) = directHelper.createSignedOrder(
-            maker, makerPrivateKey, tokenA, tokenB, BALANCE_A, BALANCE_B
+            maker,
+            makerPrivateKey,
+            tokenA,
+            tokenB,
+            BALANCE_A,
+            BALANCE_B
         );
 
         // Build taker data with signature
@@ -135,8 +148,12 @@ contract TransferModesCombinationsTest is Test {
 
         // Execute swap
         vm.prank(taker);
-        (uint256 amountIn, uint256 amountOut,) = router.swap(
-            order, address(tokenB), address(tokenA), SWAP_AMOUNT, takerData
+        (uint256 amountIn, uint256 amountOut, ) = router.swap(
+            order,
+            address(tokenB),
+            address(tokenA),
+            SWAP_AMOUNT,
+            takerData
         );
 
         _verifySwapResults(amountIn, amountOut, taker, false);
@@ -161,7 +178,12 @@ contract TransferModesCombinationsTest is Test {
 
         // Create signed order
         (ISwapVM.Order memory order, bytes memory signature) = directHelper.createSignedOrder(
-            maker, makerPrivateKey, tokenA, tokenB, BALANCE_A, BALANCE_B
+            maker,
+            makerPrivateKey,
+            tokenA,
+            tokenB,
+            BALANCE_A,
+            BALANCE_B
         );
 
         // Build taker data with signature and callback
@@ -169,7 +191,11 @@ contract TransferModesCombinationsTest is Test {
 
         // Execute swap via taker contract
         (uint256 amountIn, uint256 amountOut) = takerContract.swap(
-            order, address(tokenB), address(tokenA), SWAP_AMOUNT, takerData
+            order,
+            address(tokenB),
+            address(tokenA),
+            SWAP_AMOUNT,
+            takerData
         );
 
         _verifySwapResults(amountIn, amountOut, address(takerContract), false);
@@ -193,52 +219,66 @@ contract TransferModesCombinationsTest is Test {
         );
     }
 
-    function _buildTakerData(address takerAddr, bool useTransferFromAndAquaPush, bool hasCallback) internal pure returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: takerAddr,
-            isExactIn: true,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: hasCallback,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: useTransferFromAndAquaPush,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: ""
-        }));
+    function _buildTakerData(
+        address takerAddr,
+        bool useTransferFromAndAquaPush,
+        bool hasCallback
+    ) internal pure returns (bytes memory) {
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: takerAddr,
+                    isExactIn: true,
+                    shouldUnwrapWeth: false,
+                    hasPreTransferInCallback: hasCallback,
+                    hasPreTransferOutCallback: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: useTransferFromAndAquaPush,
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: ""
+                })
+            );
     }
 
-    function _buildTakerDataWithSignature(address takerAddr, bool hasCallback, bytes memory signature) internal pure returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: takerAddr,
-            isExactIn: true,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: hasCallback,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+    function _buildTakerDataWithSignature(
+        address takerAddr,
+        bool hasCallback,
+        bytes memory signature
+    ) internal pure returns (bytes memory) {
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: takerAddr,
+                    isExactIn: true,
+                    shouldUnwrapWeth: false,
+                    hasPreTransferInCallback: hasCallback,
+                    hasPreTransferOutCallback: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: signature
+                })
+            );
     }
 
     function _verifySwapResults(uint256 amountIn, uint256 amountOut, address recipient, bool isXYC) internal view {

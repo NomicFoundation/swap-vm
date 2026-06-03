@@ -6,7 +6,6 @@ pragma solidity 0.8.30;
 
 import { XYCFeesInvariants } from "../XYCFeesInvariants.t.sol";
 
-
 /**
  * @title ImbalancedPoolLowFees
  * @notice Tests XYC + fees with extremely imbalanced pool (A >> B) and low fees
@@ -24,11 +23,11 @@ contract ImbalancedPoolLowFees is XYCFeesInvariants {
         balanceB = 100e6;
 
         // Very low fees
-        flatFeeInBps = 0.0001e9;       // 0.01%
-        flatFeeOutBps = 0.0001e9;      // 0.01%
-        progressiveFeeInBps = 0.01e9;  // 1%
+        flatFeeInBps = 0.0001e9; // 0.01%
+        flatFeeOutBps = 0.0001e9; // 0.01%
+        progressiveFeeInBps = 0.01e9; // 1%
         progressiveFeeOutBps = 0.01e9; // 1%
-        protocolFeeOutBps = 0.001e9;   // 0.1%
+        protocolFeeOutBps = 0.001e9; // 0.1%
 
         // For extreme imbalanced pools (10^14:1 ratio with mixed decimals):
         // ExactIn testAmounts can be normal (1-10 tokens of A)
@@ -40,9 +39,9 @@ contract ImbalancedPoolLowFees is XYCFeesInvariants {
         // ExactOut amounts must be < balanceB / 3 (for additivity test which uses amount * 3)
         // balanceB = 100e6, so max is ~33e6
         testAmountsExactOut = new uint256[](3);
-        testAmountsExactOut[0] = 5e6;    // 5% of balanceB
-        testAmountsExactOut[1] = 10e6;   // 10% of balanceB
-        testAmountsExactOut[2] = 20e6;   // 20% of balanceB (60e6 total for additivity)
+        testAmountsExactOut[0] = 5e6; // 5% of balanceB
+        testAmountsExactOut[1] = 10e6; // 10% of balanceB
+        testAmountsExactOut[2] = 20e6; // 20% of balanceB (60e6 total for additivity)
 
         // Symmetry tolerance for extreme imbalanced pool:
         // Due to 6-decimal output token (like USDC), precision loss is high.

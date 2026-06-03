@@ -74,30 +74,28 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
-                    dynamic([address(tokenB), address(tokenA)]),  // Swap B to A (token1 to token0)
+                    dynamic([address(tokenB), address(tokenA)]), // Swap B to A (token1 to token0)
                     dynamic([uint256(300000e18), uint256(100e18)]) // 3000:1 rate
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
 
         // Test at different gas prices
         uint256[] memory gasPrices = new uint256[](4);
-        gasPrices[0] = 20 gwei;   // Base gas price - no adjustment
-        gasPrices[1] = 50 gwei;   // Moderate gas - some adjustment
-        gasPrices[2] = 100 gwei;  // High gas - significant adjustment
-        gasPrices[3] = 200 gwei;  // Very high gas - max adjustment
+        gasPrices[0] = 20 gwei; // Base gas price - no adjustment
+        gasPrices[1] = 50 gwei; // Moderate gas - some adjustment
+        gasPrices[2] = 100 gwei; // High gas - significant adjustment
+        gasPrices[3] = 200 gwei; // Very high gas - max adjustment
 
         uint256[] memory expectedOutputs = new uint256[](4);
 
@@ -108,7 +106,7 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
             bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
             // Quote with current gas conditions - swap B to A
-            (, uint256 quotedOut,) = swapVM.asView().quote(
+            (, uint256 quotedOut, ) = swapVM.asView().quote(
                 order,
                 address(tokenB),
                 address(tokenA),
@@ -121,7 +119,7 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         // Verify outputs increase with gas price (or stay same if capped)
         for (uint256 i = 1; i < expectedOutputs.length; i++) {
-            assertGe(expectedOutputs[i], expectedOutputs[i-1], "Higher gas should improve or maintain price");
+            assertGe(expectedOutputs[i], expectedOutputs[i - 1], "Higher gas should improve or maintain price");
         }
     }
 
@@ -140,33 +138,30 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenB), address(tokenA)]), // Swap B to A
                     dynamic([uint256(3500000e18), uint256(1000e18)]) // 3500:1 rate
-                )),
+                )
+            ),
             // DutchAuction adjusts balances, then LimitSwap computes amounts
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
             // BaseFeeAdjuster must be applied after the swap
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
 
         // Test at different times and gas prices
         uint256[] memory timeOffsets = new uint256[](3);
-        timeOffsets[0] = 0;    // Start
-        timeOffsets[1] = 150;  // Mid auction
-        timeOffsets[2] = 299;  // Near end
+        timeOffsets[0] = 0; // Start
+        timeOffsets[1] = 150; // Mid auction
+        timeOffsets[2] = 299; // Near end
 
         uint256[] memory gasPrices = new uint256[](2);
         gasPrices[0] = 30 gwei;
@@ -181,7 +176,7 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
                 bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
-                (, uint256 quotedOut,) = swapVM.asView().quote(
+                (, uint256 quotedOut, ) = swapVM.asView().quote(
                     order,
                     address(tokenB),
                     address(tokenA),
@@ -208,20 +203,18 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenB), address(tokenA)]), // Swap B to A
                     dynamic([uint256(300000e18), uint256(100e18)])
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -231,7 +224,7 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
-        (, uint256 quotedOut,) = swapVM.asView().quote(
+        (, uint256 quotedOut, ) = swapVM.asView().quote(
             order,
             address(tokenB),
             address(tokenA),
@@ -256,20 +249,18 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenB), address(tokenA)]), // Swap B to A
                     dynamic([uint256(300000e18), uint256(100e18)])
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -278,7 +269,7 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
         // Test at gas price below base
         vm.fee(30 gwei); // Below base of 50 gwei
 
-        (, uint256 outputLowGas,) = swapVM.asView().quote(
+        (, uint256 outputLowGas, ) = swapVM.asView().quote(
             order,
             address(tokenB),
             address(tokenA),
@@ -289,7 +280,7 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
         // Test at base gas price
         vm.fee(50 gwei);
 
-        (, uint256 outputBaseGas,) = swapVM.asView().quote(
+        (, uint256 outputBaseGas, ) = swapVM.asView().quote(
             order,
             address(tokenB),
             address(tokenA),
@@ -314,15 +305,18 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenB), address(tokenA)]),
                     dynamic([uint256(300000e18), uint256(100e18)]) // 3000:1 rate
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToToken1Price, gasAmount, maxPriceDecay))
+                )
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToToken1Price, gasAmount, maxPriceDecay)
+            )
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -330,11 +324,17 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
         // Base case
         vm.fee(20 gwei);
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (, uint256 baseOutput,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 3000e18, exactInData);
+        (, uint256 baseOutput, ) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 3000e18, exactInData);
 
         // High gas
         vm.fee(100 gwei);
-        (, uint256 adjustedOutput,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 3000e18, exactInData);
+        (, uint256 adjustedOutput, ) = swapVM.asView().quote(
+            order,
+            address(tokenB),
+            address(tokenA),
+            3000e18,
+            exactInData
+        );
 
         // Expected: 0.012 ETH gas cost = 1.2% of 1 ETH = 1.2% compensation
         uint256 expectedCompensation = 0.012e18;
@@ -355,27 +355,42 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenB), address(tokenA)]),
                     dynamic([uint256(300000e18), uint256(100e18)]) // 3000:1 rate
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToToken1Price, gasAmount, maxPriceDecay))
+                )
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToToken1Price, gasAmount, maxPriceDecay)
+            )
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
         vm.fee(20 gwei);
-        (, uint256 smallBase,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 300e18, exactInData);
-        (, uint256 largeBase,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 3000e18, exactInData);
+        (, uint256 smallBase, ) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 300e18, exactInData);
+        (, uint256 largeBase, ) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 3000e18, exactInData);
 
         vm.fee(100 gwei);
-        (, uint256 smallAdjusted,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 300e18, exactInData);
-        (, uint256 largeAdjusted,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 3000e18, exactInData);
+        (, uint256 smallAdjusted, ) = swapVM.asView().quote(
+            order,
+            address(tokenB),
+            address(tokenA),
+            300e18,
+            exactInData
+        );
+        (, uint256 largeAdjusted, ) = swapVM.asView().quote(
+            order,
+            address(tokenB),
+            address(tokenA),
+            3000e18,
+            exactInData
+        );
 
         uint256 smallPct = ((smallAdjusted - smallBase) * 100e18) / smallBase;
         uint256 largePct = ((largeAdjusted - largeBase) * 100e18) / largeBase;
@@ -397,25 +412,34 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenB), address(tokenA)]),
                     dynamic([uint256(300000e18), uint256(100e18)]) // 3000:1 rate
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToToken1Price, gasAmount, maxPriceDecay))
+                )
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToToken1Price, gasAmount, maxPriceDecay)
+            )
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactOutData = _signAndPackTakerData(order, false, 0);
 
         vm.fee(20 gwei);
-        (uint256 baseInput,,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 1e18, exactOutData);
+        (uint256 baseInput, , ) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 1e18, exactOutData);
 
         vm.fee(100 gwei);
-        (uint256 adjustedInput,,) = swapVM.asView().quote(order, address(tokenB), address(tokenA), 1e18, exactOutData);
+        (uint256 adjustedInput, , ) = swapVM.asView().quote(
+            order,
+            address(tokenB),
+            address(tokenA),
+            1e18,
+            exactOutData
+        );
 
         // Expected: 36 USDC discount on 3000 USDC = 1.2%
         uint256 expectedDiscount = 36e18;
@@ -428,26 +452,29 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -461,27 +488,29 @@ contract BaseFeeAdjusterTest is Test, OpcodesDebug {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

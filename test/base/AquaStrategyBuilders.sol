@@ -79,8 +79,10 @@ abstract contract AquaStrategyBuilders is TestConstants, Test, AquaOpcodesDebug 
 
         bytes memory concentrateProgram = "";
 
-        if(setup.swapType == SwapType.CONCENTRATE_GROW_LIQUIDITY ||
-            setup.swapType == SwapType.CONCENTRATE_GROW_PRICE_RANGE) {
+        if (
+            setup.swapType == SwapType.CONCENTRATE_GROW_LIQUIDITY ||
+            setup.swapType == SwapType.CONCENTRATE_GROW_PRICE_RANGE
+        ) {
             // In the new API, use sqrt price bounds directly
             // priceMin/priceMax are in 1e18 format; sqrtP = sqrt(price * 1e18)
             uint256 sqrtPmin = Math.sqrt(setup.priceMin * 1e18);
@@ -91,46 +93,50 @@ abstract contract AquaStrategyBuilders is TestConstants, Test, AquaOpcodesDebug 
             );
         }
 
-        bytes memory swapProgram = concentrateProgram.length > 0
-            ? concentrateProgram
-            : p.build(XYCSwap._xycSwapXD);
+        bytes memory swapProgram = concentrateProgram.length > 0 ? concentrateProgram : p.build(XYCSwap._xycSwapXD);
 
-        return bytes.concat(
-            setup.protocolFeeBps > 0 ? p.build(Fee._aquaProtocolFeeAmountInXD, FeeArgsBuilder.buildProtocolFee(setup.protocolFeeBps, setup.protocolFeeRecipient)) : bytes(""),
-            setup.feeInBps > 0 ? p.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(setup.feeInBps)) : bytes(""),
-            swapProgram,
-            p.build(Controls._salt, abi.encodePacked(vm.randomUint()))
+        return
+            bytes.concat(
+                setup.protocolFeeBps > 0
+                    ? p.build(
+                        Fee._aquaProtocolFeeAmountInXD,
+                        FeeArgsBuilder.buildProtocolFee(setup.protocolFeeBps, setup.protocolFeeRecipient)
+                    )
+                    : bytes(""),
+                setup.feeInBps > 0
+                    ? p.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(setup.feeInBps))
+                    : bytes(""),
+                swapProgram,
+                p.build(Controls._salt, abi.encodePacked(vm.randomUint()))
+            );
+    }
+
+    function createStrategy(bytes memory programBytes) public view returns (ISwapVM.Order memory order) {
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: true,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: programBytes
+            })
         );
     }
 
-    function createStrategy(
-        bytes memory programBytes
-    ) public view returns (ISwapVM.Order memory order) {
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: true,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: programBytes
-        }));
-    }
-
-    function createStrategy(
-        MakerSetup memory setup
-    ) public view returns (ISwapVM.Order memory) {
+    function createStrategy(MakerSetup memory setup) public view returns (ISwapVM.Order memory) {
         return createStrategy(buildProgram(setup));
     }
 

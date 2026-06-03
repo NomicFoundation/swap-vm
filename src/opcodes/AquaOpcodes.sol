@@ -16,20 +16,17 @@ import { Fee } from "../instructions/Fee.sol";
 import { Extruction } from "../instructions/Extruction.sol";
 import { PeggedSwap } from "../instructions/PeggedSwap.sol";
 
-contract AquaOpcodes is
-    Controls,
-    XYCSwap,
-    XYCConcentrate,
-    Decay,
-    Fee,
-    PeggedSwap,
-    Extruction
-{
+contract AquaOpcodes is Controls, XYCSwap, XYCConcentrate, Decay, Fee, PeggedSwap, Extruction {
     constructor(address aqua) Fee(aqua) {}
 
     function _notInstruction(Context memory /* ctx */, bytes calldata /* args */) internal view {}
 
-    function _opcodes() internal pure virtual returns (function(Context memory, bytes calldata) internal[] memory result) {
+    function _opcodes()
+        internal
+        pure
+        virtual
+        returns (function(Context memory, bytes calldata) internal[] memory result)
+    {
         function(Context memory, bytes calldata) internal[34] memory instructions = [
             _notInstruction,
             // Debug - reserved for debugging utilities (core infrastructure)

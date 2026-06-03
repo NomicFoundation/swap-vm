@@ -40,33 +40,39 @@ contract DirectSwapVMHelper is OpcodesDebug {
     ) external view returns (ISwapVM.Order memory order, bytes memory signature) {
         Program memory p = ProgramBuilder.init(_opcodes());
         bytes memory programBytes = bytes.concat(
-            p.build(Balances._staticBalancesXD,
-                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))),
-            p.build(LimitSwap._limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            p.build(Controls._salt, ControlsArgsBuilder.buildSalt(uint64(uint256(keccak256(abi.encode(block.timestamp))))))
+            p.build(
+                Balances._staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            p.build(LimitSwap._limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+            p.build(
+                Controls._salt,
+                ControlsArgsBuilder.buildSalt(uint64(uint256(keccak256(abi.encode(block.timestamp)))))
+            )
         );
 
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: programBytes
-        }));
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: programBytes
+            })
+        );
 
         bytes32 orderHash = router.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vmInstance.sign(makerPrivateKey, orderHash);

@@ -82,16 +82,9 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
         TokenMock(tokenIn).mint(taker, amount * 10);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         // Verify the swap consumed the expected input amount
-
 
         return (actualIn, actualOut);
     }
@@ -107,17 +100,16 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         _testInvariants(bytecode);
@@ -134,17 +126,16 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         _testInvariants(bytecode);
@@ -161,17 +152,16 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_progressiveFeeInXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_progressiveFeeInXD, FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         // TODO: Fix additivity and monotonicity for progressive fees with dutch auction
@@ -189,17 +179,16 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_progressiveFeeOutXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_progressiveFeeOutXD, FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         // TODO: Fix additivity for progressive fees with dutch auction
@@ -217,17 +206,16 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_protocolFeeAmountOutXD, FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         // TODO: Fix additivity for protocol fees with dutch auction
@@ -246,20 +234,18 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+                )
+            ),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
             // Multiple fees
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(flatFeeBps)),
-            program.build(_progressiveFeeOutXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(progressiveFeeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(flatFeeBps)),
+            program.build(_progressiveFeeOutXD, FeeArgsBuilderExperimental.buildProgressiveFee(progressiveFeeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         // TODO: Fix additivity for progressive fees with dutch auction
@@ -277,17 +263,16 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         _testInvariants(bytecode);
@@ -311,9 +296,9 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
         // Test at different time points
         uint40 startTime = uint40(block.timestamp);
         uint256[] memory timeOffsets = new uint256[](3);
-        timeOffsets[0] = 0;     // Start
-        timeOffsets[1] = 150;   // Mid-auction
-        timeOffsets[2] = 280;   // Near end
+        timeOffsets[0] = 0; // Start
+        timeOffsets[1] = 150; // Mid-auction
+        timeOffsets[2] = 280; // Near end
 
         for (uint256 i = 0; i < timeOffsets.length; i++) {
             // Save snapshot before time manipulation
@@ -330,13 +315,7 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
             config.skipAdditivity = skipAdditivity;
             config.skipMonotonicity = skipMonotonicity;
 
-            assertAllInvariantsWithConfig(
-                swapVM,
-                order,
-                address(tokenA),
-                address(tokenB),
-                config
-            );
+            assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
 
             // Restore snapshot
             vm.revertTo(snapshot);
@@ -345,26 +324,29 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -378,27 +360,29 @@ contract DutchAuctionLimitSwapFeesInvariants is Test, OpcodesDebug, CoreInvarian
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

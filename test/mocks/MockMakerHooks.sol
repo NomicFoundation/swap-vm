@@ -104,17 +104,7 @@ contract MockMakerHooks is IMakerHooks {
 
         preTransferInCallCount++;
 
-        emit PreTransferInCalled(
-            maker,
-            taker,
-            tokenIn,
-            tokenOut,
-            amountIn,
-            amountOut,
-            orderHash,
-            makerData,
-            takerData
-        );
+        emit PreTransferInCalled(maker, taker, tokenIn, tokenOut, amountIn, amountOut, orderHash, makerData, takerData);
     }
 
     function postTransferIn(
@@ -233,10 +223,11 @@ contract MockMakerHooks is IMakerHooks {
 
     // Helper function to verify all hooks were called
     function allHooksCalled() external view returns (bool) {
-        return preTransferInCallCount > 0
-            && postTransferInCallCount > 0
-            && preTransferOutCallCount > 0
-            && postTransferOutCallCount > 0;
+        return
+            preTransferInCallCount > 0 &&
+            postTransferInCallCount > 0 &&
+            preTransferOutCallCount > 0 &&
+            postTransferOutCallCount > 0;
     }
 
     // Helper function to reset counters

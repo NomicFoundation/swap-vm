@@ -59,10 +59,16 @@ contract Controls {
     error DeadlineReached(address taker, uint256 deadline);
     error TakerTokenBalanceIsZero(address taker, address token);
     error TakerTokenBalanceIsLessThanRequired(address taker, address token, uint256 balance, uint256 minAmount);
-    error TakerTokenBalanceSupplyShareIsLessThanRequired(address taker, address token, uint256 balance, uint256 totalSupply, uint256 minShareE18);
+    error TakerTokenBalanceSupplyShareIsLessThanRequired(
+        address taker,
+        address token,
+        uint256 balance,
+        uint256 totalSupply,
+        uint256 minShareE18
+    );
 
     /// @dev This instruction does nothing and can be used for uniqueness order hash value.
-    function _salt(Context memory /* ctx */, bytes calldata /* args */) internal pure { }
+    function _salt(Context memory /* ctx */, bytes calldata /* args */) internal pure {}
 
     /// @dev Unconditional jump to the specified program counter
     /// @dev LIMITATION: Jump targets are limited to uint16 (0-65,535) due to 2-byte encoding.
@@ -131,6 +137,9 @@ contract Controls {
         uint256 balance = IERC20(token).balanceOf(ctx.query.taker);
         uint256 totalSupply = IERC20(token).totalSupply();
         // balance * 1e18 / totalSupply >= minShareE18
-        require(totalSupply > 0 && balance * 1e18 >= minShareE18 * totalSupply, TakerTokenBalanceSupplyShareIsLessThanRequired(ctx.query.taker, token, balance, totalSupply, minShareE18));
+        require(
+            totalSupply > 0 && balance * 1e18 >= minShareE18 * totalSupply,
+            TakerTokenBalanceSupplyShareIsLessThanRequired(ctx.query.taker, token, balance, totalSupply, minShareE18)
+        );
     }
 }

@@ -6,7 +6,6 @@ pragma solidity 0.8.30;
 
 import { XYCFeesInvariants } from "../XYCFeesInvariants.t.sol";
 
-
 /**
  * @title ImbalancedPoolHighFees
  * @notice Tests XYC + fees with imbalanced pool (A >> B) and high fees
@@ -21,11 +20,11 @@ contract ImbalancedPoolHighFees is XYCFeesInvariants {
         balanceB = 100e18;
 
         // High fees
-        flatFeeInBps = 0.01e9;        // 1%
-        flatFeeOutBps = 0.01e9;       // 1%
-        progressiveFeeInBps = 0.2e9;  // 20%
+        flatFeeInBps = 0.01e9; // 1%
+        flatFeeOutBps = 0.01e9; // 1%
+        progressiveFeeInBps = 0.2e9; // 20%
         progressiveFeeOutBps = 0.2e9; // 20%
-        protocolFeeOutBps = 0.05e9;   // 5%
+        protocolFeeOutBps = 0.05e9; // 5%
 
         // Smaller amounts due to imbalanced pool
         testAmounts = new uint256[](3);
@@ -47,6 +46,6 @@ contract ImbalancedPoolHighFees is XYCFeesInvariants {
         additivityTolerance = 1;
 
         // 100:1 ratio + high fees causes >5% price deviation (102/107.4 = 95%)
-        roundingToleranceBps = 600;  // 6% = 600 bps
+        roundingToleranceBps = 600; // 6% = 600 bps
     }
 }

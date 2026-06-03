@@ -7,7 +7,6 @@ pragma solidity 0.8.30;
 import { XYCFeesInvariants } from "../XYCFeesInvariants.t.sol";
 import { TokenMockDecimals } from "../../mocks/TokenMockDecimals.sol";
 
-
 /**
  * @title TinyLiquidity
  * @notice Tests XYC + fees with small pool using 6-decimal tokens (USDC-like)
@@ -38,18 +37,18 @@ contract TinyLiquidity is XYCFeesInvariants {
         balanceB = 1000e6;
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        flatFeeOutBps = 0.003e9;       // 0.3%
-        progressiveFeeInBps = 0.05e9;  // 5%
+        flatFeeInBps = 0.003e9; // 0.3%
+        flatFeeOutBps = 0.003e9; // 0.3%
+        progressiveFeeInBps = 0.05e9; // 5%
         progressiveFeeOutBps = 0.05e9; // 5%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Test amounts where monotonicity holds (> 0.1% of pool)
         // Below this, rounding dominates price impact
         testAmounts = new uint256[](3);
-        testAmounts[0] = 1e5;   // 0.1 tokens = 0.1% of pool
-        testAmounts[1] = 1e6;   // 1 token = 1% of pool
-        testAmounts[2] = 10e6;  // 10 tokens = 10% of pool
+        testAmounts[0] = 1e5; // 0.1 tokens = 0.1% of pool
+        testAmounts[1] = 1e6; // 1 token = 1% of pool
+        testAmounts[2] = 10e6; // 10 tokens = 10% of pool
 
         // Allow 1-wei rounding in additivity
         additivityTolerance = 1;

@@ -73,13 +73,14 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         uint256 sqrtPmin,
         uint256 sqrtPmax
     ) internal view returns (uint256 balA, uint256 balB) {
-        (, uint256 actualLt, uint256 actualGt) =
-            XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-                available, available, 1e18, sqrtPmin, sqrtPmax
-            );
-        (balA, balB) = address(tokenA) < address(tokenB)
-            ? (actualLt, actualGt)
-            : (actualGt, actualLt);
+        (, uint256 actualLt, uint256 actualGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
+            available,
+            available,
+            1e18,
+            sqrtPmin,
+            sqrtPmax
+        );
+        (balA, balB) = address(tokenA) < address(tokenB) ? (actualLt, actualGt) : (actualGt, actualLt);
     }
 
     /**
@@ -97,13 +98,7 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         TokenMock(tokenIn).mint(taker, amount * 10);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         return (actualIn, actualOut);
     }
@@ -114,8 +109,12 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         return [bA, bB];
     }
 
-    function _sqrtPmin() internal pure returns (uint256) { return Math.sqrt(0.8e36); }
-    function _sqrtPmax() internal pure returns (uint256) { return Math.sqrt(1.25e36); }
+    function _sqrtPmin() internal pure returns (uint256) {
+        return Math.sqrt(0.8e36);
+    }
+    function _sqrtPmax() internal pure returns (uint256) {
+        return Math.sqrt(1.25e36);
+    }
     function _cArgs() internal pure returns (bytes memory) {
         return XYCConcentrateArgsBuilder.build2D(_sqrtPmin(), _sqrtPmax());
     }
@@ -126,11 +125,10 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         Program memory program = ProgramBuilder.init(_opcodes());
         (uint256 _balA, uint256 _balB) = _concentrateBalances(1000e18, _sqrtPmin(), _sqrtPmax());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balA, _balB])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([_balA, _balB]))
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(300)),
             program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(0.003e9)),
             program.build(_xycConcentrateGrowLiquidity2D, _cArgs())
@@ -143,11 +141,10 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         Program memory program = ProgramBuilder.init(_opcodes());
         (uint256 _balA, uint256 _balB) = _concentrateBalances(1500e18, _sqrtPmin(), _sqrtPmax());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balA, _balB])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([_balA, _balB]))
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(600)),
             program.build(_progressiveFeeOutXD, FeeArgsBuilderExperimental.buildProgressiveFee(0.01e9)),
             program.build(_xycConcentrateGrowLiquidity2D, _cArgs())
@@ -164,11 +161,10 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         Program memory program = ProgramBuilder.init(_opcodes());
         (uint256 _balA, uint256 _balB) = _concentrateBalances(1100e18, _sqrtPmin(), _sqrtPmax());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balA, _balB])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([_balA, _balB]))
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(450)),
             program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(0.004e9)),
             program.build(_xycConcentrateGrowLiquidity2D, _cArgs())
@@ -181,11 +177,10 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         Program memory program = ProgramBuilder.init(_opcodes());
         (uint256 _balA, uint256 _balB) = _concentrateBalances(1800e18, _sqrtPmin(), _sqrtPmax());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balA, _balB])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([_balA, _balB]))
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(720)),
             program.build(_progressiveFeeInXD, FeeArgsBuilderExperimental.buildProgressiveFee(0.05e9)),
             program.build(_xycConcentrateGrowLiquidity2D, _cArgs())
@@ -204,14 +199,12 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         Program memory program = ProgramBuilder.init(_opcodes());
         (uint256 _balA, uint256 _balB) = _concentrateBalances(1300e18, _sqrtPmin(), _sqrtPmax());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balA, _balB])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([_balA, _balB]))
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(540)),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(0.0025e9, feeRecipient)),
+            program.build(_protocolFeeAmountOutXD, FeeArgsBuilder.buildProtocolFee(0.0025e9, feeRecipient)),
             program.build(_xycConcentrateGrowLiquidity2D, _cArgs())
         );
 
@@ -222,11 +215,10 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         Program memory program = ProgramBuilder.init(_opcodes());
         (uint256 _balA, uint256 _balB) = _concentrateBalances(1700e18, _sqrtPmin(), _sqrtPmax());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balA, _balB])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([_balA, _balB]))
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(780)),
             program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(0.002e9)),
             program.build(_progressiveFeeInXD, FeeArgsBuilderExperimental.buildProgressiveFee(0.03e9)),
@@ -242,11 +234,10 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         Program memory program = ProgramBuilder.init(_opcodes());
         (uint256 _balA, uint256 _balB) = _concentrateBalances(1500e18, _sqrtPmin(), _sqrtPmax());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balA, _balB])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([_balA, _balB]))
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(480)),
             program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(0.0055e9)),
             program.build(_xycConcentrateGrowLiquidity2D, _cArgs())
@@ -277,36 +268,33 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
         // TODO: need to research behavior
         config.skipSymmetry = skipSymmetry;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -320,27 +308,29 @@ contract ConcentrateXYCDecayFeesInvariants is Test, OpcodesDebug, CoreInvariants
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

@@ -27,20 +27,12 @@ library BaseFeeAdjusterArgsBuilder {
         uint24 gasAmount,
         uint64 maxPriceDecay
     ) internal pure returns (bytes memory) {
-        return abi.encodePacked(
-            baseGasPrice,
-            ethToToken1Price,
-            gasAmount,
-            maxPriceDecay
-        );
+        return abi.encodePacked(baseGasPrice, ethToToken1Price, gasAmount, maxPriceDecay);
     }
 
-    function parse(bytes calldata args) internal pure returns (
-        uint64 baseGasPrice,
-        uint96 ethToToken1Price,
-        uint24 gasAmount,
-        uint64 maxPriceDecay
-    ) {
+    function parse(
+        bytes calldata args
+    ) internal pure returns (uint64 baseGasPrice, uint96 ethToToken1Price, uint24 gasAmount, uint64 maxPriceDecay) {
         baseGasPrice = uint64(bytes8(args.slice(0, 8, BaseFeeAdjusterMissingBaseGasPriceArg.selector)));
         ethToToken1Price = uint96(bytes12(args.slice(8, 20, BaseFeeAdjusterMissingEthPriceArg.selector)));
         gasAmount = uint24(bytes3(args.slice(20, 23, BaseFeeAdjusterMissingGasAmountArg.selector)));
@@ -94,13 +86,13 @@ contract BaseFeeAdjuster {
                 // exactIn: Increase amountOut (taker gets more token0)
                 // To calculate extraCostInToken0 we would need the swap price and extraCostInToken1,
                 // but we can avoid division by adjusting amountOut directly: extraCostInToken1 * amountOut/amountIn
-                uint256 priceIncrease = 1e18 + extraCostInToken1 * 1e18 / ctx.swap.amountIn;
+                uint256 priceIncrease = 1e18 + (extraCostInToken1 * 1e18) / ctx.swap.amountIn;
                 uint256 maxIncrease = (2e18 - maxPriceDecay); // Mirror of decay for increase
                 priceIncrease = Math.min(priceIncrease, maxIncrease);
                 ctx.swap.amountOut = (ctx.swap.amountOut * priceIncrease) / 1e18;
             } else {
                 // exactOut: Reduce amountIn (taker pays less token1)
-                uint256 priceDecay = 1e18 - (extraCostInToken1 * 1e18 / ctx.swap.amountIn);
+                uint256 priceDecay = 1e18 - ((extraCostInToken1 * 1e18) / ctx.swap.amountIn);
                 priceDecay = Math.max(priceDecay, maxPriceDecay);
                 ctx.swap.amountIn = (ctx.swap.amountIn * priceDecay).ceilDiv(1e18);
             }

@@ -15,7 +15,7 @@ contract BalancedCurve is PeggedFeesInvariants {
         balanceB = 1000e18;
         x0 = 1000e18;
         y0 = 1000e18;
-        linearWidth = 0.5e27;  // A = 0.5: balanced
+        linearWidth = 0.5e27; // A = 0.5: balanced
 
         testAmounts = new uint256[](3);
         testAmounts[0] = 10e18;

@@ -16,7 +16,7 @@ contract VeryLinear is PeggedFeesInvariants {
         balanceB = 1000e18;
         x0 = 1000e18;
         y0 = 1000e18;
-        linearWidth = 0.95e27;  // A = 0.95: very linear
+        linearWidth = 0.95e27; // A = 0.95: very linear
 
         testAmounts = new uint256[](3);
         testAmounts[0] = 10e18;

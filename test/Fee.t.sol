@@ -80,47 +80,52 @@ contract FeeTest is Test, OpcodesDebug {
         uint32 feeOutBps;
     }
 
-    function _createOrder(MakerSetup memory setup) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
+    function _createOrder(
+        MakerSetup memory setup
+    ) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
         Program memory program = ProgramBuilder.init(_opcodes());
 
         bytes memory programBytes = bytes.concat(
             // 1. Set initial token balances
-            program.build(Balances._dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([tokenA, tokenB]),
-                    dynamic([setup.balanceA, setup.balanceB])
-                )),
+            program.build(
+                Balances._dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([tokenA, tokenB]), dynamic([setup.balanceA, setup.balanceB]))
+            ),
             // 2. Apply feeIn (optional)
-            setup.feeInBps > 0 ? program.build(Fee._flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(setup.feeInBps)) : bytes(""),
+            setup.feeInBps > 0
+                ? program.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(setup.feeInBps))
+                : bytes(""),
             // 3. Apply feeOut (optional)
-            setup.feeOutBps > 0 ? program.build(FeeExperimental._flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(setup.feeOutBps)) : bytes(""),
+            setup.feeOutBps > 0
+                ? program.build(FeeExperimental._flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(setup.feeOutBps))
+                : bytes(""),
             // 4. Perform the swap
             program.build(XYCSwap._xycSwapXD)
         );
 
         // === Create Order ===
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: programBytes
-        }));
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: programBytes
+            })
+        );
 
         bytes32 orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
@@ -132,27 +137,30 @@ contract FeeTest is Test, OpcodesDebug {
     }
 
     function _makeTakerData(TakerSetup memory setup, bytes memory signature) internal view returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: taker,
-            isExactIn: setup.isExactIn,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "", // no minimum output
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: taker,
+                    isExactIn: setup.isExactIn,
+                    shouldUnwrapWeth: false,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "", // no minimum output
+                    to: address(0),
+                    deadline: 0,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: signature
+                })
+            );
     }
 
     function test_FeeIn_ExactIn_SwapAndQuoteConsistent() public {
@@ -170,11 +178,23 @@ contract FeeTest is Test, OpcodesDebug {
         uint256 amountIn = 10e18;
 
         // Get quote
-        (uint256 quotedAmountIn, uint256 quotedAmountOut,) = swapVM.asView().quote(order, tokenA, tokenB, amountIn, exactInTakerData);
+        (uint256 quotedAmountIn, uint256 quotedAmountOut, ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            amountIn,
+            exactInTakerData
+        );
 
         // Execute swap
         vm.prank(taker);
-        (uint256 swappedAmountIn, uint256 swappedAmountOut,) = swapVM.swap(order, tokenA, tokenB, amountIn, exactInTakerData);
+        (uint256 swappedAmountIn, uint256 swappedAmountOut, ) = swapVM.swap(
+            order,
+            tokenA,
+            tokenB,
+            amountIn,
+            exactInTakerData
+        );
 
         // Verify quote matches swap
         assertEq(swappedAmountIn, quotedAmountIn, "Swap amountIn should match quote");
@@ -201,18 +221,31 @@ contract FeeTest is Test, OpcodesDebug {
         uint256 amountOut = 10e18;
 
         // Get quote
-        (uint256 quotedAmountIn, uint256 quotedAmountOut,) = swapVM.asView().quote(order, tokenA, tokenB, amountOut, exactOutTakerData);
+        (uint256 quotedAmountIn, uint256 quotedAmountOut, ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            amountOut,
+            exactOutTakerData
+        );
 
         // Execute swap
         vm.prank(taker);
-        (uint256 swappedAmountIn, uint256 swappedAmountOut,) = swapVM.swap(order, tokenA, tokenB, amountOut, exactOutTakerData);
+        (uint256 swappedAmountIn, uint256 swappedAmountOut, ) = swapVM.swap(
+            order,
+            tokenA,
+            tokenB,
+            amountOut,
+            exactOutTakerData
+        );
 
         // Verify quote matches swap
         assertEq(swappedAmountIn, quotedAmountIn, "Swap amountIn should match quote");
         assertEq(swappedAmountOut, quotedAmountOut, "Swap amountOut should match quote");
 
         // Verify fee calculation correctness
-        uint256 baseInput = (amountOut * setup.balanceA + (setup.balanceB - amountOut - 1)) / (setup.balanceB - amountOut);
+        uint256 baseInput =
+            (amountOut * setup.balanceA + (setup.balanceB - amountOut - 1)) / (setup.balanceB - amountOut);
         uint256 expectedInputWithFee = Math.ceilDiv(baseInput * BPS, BPS - setup.feeInBps);
         assertEq(swappedAmountIn, expectedInputWithFee, "Input should reflect fee-in calculation");
     }
@@ -228,24 +261,26 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0.10e9, // 10% fee
             feeOutBps: 0 // no feeOut
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         uint256 inputAmount = 10e18;
 
         // Step 1: ExactIn quoting - input 10e18 tokenA
         bytes memory exactInTakerData = _makeTakerData(TakerSetup({ isExactIn: true }), "");
-        (, uint256 outputFromExactIn,) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
+        (, uint256 outputFromExactIn, ) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
 
         // Step 2: ExactOut quoting - request the exact output amount from exactIn
         bytes memory exactOutTakerData = _makeTakerData(TakerSetup({ isExactIn: false }), "");
-        (uint256 inputForExactOut,,) = swapVM.asView().quote(order, tokenA, tokenB, outputFromExactIn, exactOutTakerData);
+        (uint256 inputForExactOut, , ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            outputFromExactIn,
+            exactOutTakerData
+        );
 
         // Step 3: Verify the exchange rate is consistent
-        assertEq(
-            inputForExactOut,
-            inputAmount,
-            "ExactIn and ExactOut should have same exchange rate for FEE_IN"
-        );
+        assertEq(inputForExactOut, inputAmount, "ExactIn and ExactOut should have same exchange rate for FEE_IN");
     }
 
     function test_FeeIn_ExchangeRateConsistency_ForLargeAmount() public view {
@@ -255,25 +290,27 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0.10e9, // 10% fee
             feeOutBps: 0 // no feeOut
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         // Step 0: ExactOut quoting to get input for output of 100% of balanceB - 1
         bytes memory exactOutTakerData = _makeTakerData(TakerSetup({ isExactIn: false }), "");
-        (uint256 inputAmount,,) = swapVM.asView().quote(order, tokenA, tokenB, setup.balanceB - 1, exactOutTakerData);
+        (uint256 inputAmount, , ) = swapVM.asView().quote(order, tokenA, tokenB, setup.balanceB - 1, exactOutTakerData);
 
         // Step 1: ExactIn quoting
         bytes memory exactInTakerData = _makeTakerData(TakerSetup({ isExactIn: true }), "");
-        (, uint256 outputFromExactIn,) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
+        (, uint256 outputFromExactIn, ) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
 
         // Step 2: ExactOut quoting - request the exact output amount from exactIn
-        (uint256 inputForExactOut,,) = swapVM.asView().quote(order, tokenA, tokenB, outputFromExactIn, exactOutTakerData);
+        (uint256 inputForExactOut, , ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            outputFromExactIn,
+            exactOutTakerData
+        );
 
         // Step 3: Verify the exchange rate is consistent
-        assertEq(
-            inputForExactOut,
-            inputAmount,
-            "ExactIn and ExactOut should have same exchange rate for FEE_IN"
-        );
+        assertEq(inputForExactOut, inputAmount, "ExactIn and ExactOut should have same exchange rate for FEE_IN");
     }
 
     function test_FeeOut_ExactIn_SwapAndQuoteConsistent() public {
@@ -291,11 +328,23 @@ contract FeeTest is Test, OpcodesDebug {
         uint256 amountIn = 10e18;
 
         // Get quote
-        (uint256 quotedAmountIn, uint256 quotedAmountOut,) = swapVM.asView().quote(order, tokenA, tokenB, amountIn, exactInTakerData);
+        (uint256 quotedAmountIn, uint256 quotedAmountOut, ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            amountIn,
+            exactInTakerData
+        );
 
         // Execute swap
         vm.prank(taker);
-        (uint256 swappedAmountIn, uint256 swappedAmountOut,) = swapVM.swap(order, tokenA, tokenB, amountIn, exactInTakerData);
+        (uint256 swappedAmountIn, uint256 swappedAmountOut, ) = swapVM.swap(
+            order,
+            tokenA,
+            tokenB,
+            amountIn,
+            exactInTakerData
+        );
 
         // Verify quote matches swap
         assertEq(swappedAmountIn, quotedAmountIn, "Swap amountIn should match quote");
@@ -303,7 +352,7 @@ contract FeeTest is Test, OpcodesDebug {
 
         // Verify fee calculation correctness
         uint256 rawOutput = (amountIn * setup.balanceB) / (setup.balanceA + amountIn);
-        uint256 expectedOutputWithFee = rawOutput - rawOutput * setup.feeOutBps / BPS;
+        uint256 expectedOutputWithFee = rawOutput - (rawOutput * setup.feeOutBps) / BPS;
         assertEq(swappedAmountOut, expectedOutputWithFee, "Output should reflect fee-out calculation");
     }
 
@@ -322,11 +371,23 @@ contract FeeTest is Test, OpcodesDebug {
         uint256 amountOut = 10e18;
 
         // Get quote
-        (uint256 quotedAmountIn, uint256 quotedAmountOut,) = swapVM.asView().quote(order, tokenA, tokenB, amountOut, exactOutTakerData);
+        (uint256 quotedAmountIn, uint256 quotedAmountOut, ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            amountOut,
+            exactOutTakerData
+        );
 
         // Execute swap
         vm.prank(taker);
-        (uint256 swappedAmountIn, uint256 swappedAmountOut,) = swapVM.swap(order, tokenA, tokenB, amountOut, exactOutTakerData);
+        (uint256 swappedAmountIn, uint256 swappedAmountOut, ) = swapVM.swap(
+            order,
+            tokenA,
+            tokenB,
+            amountOut,
+            exactOutTakerData
+        );
 
         // Verify quote matches swap
         assertEq(swappedAmountIn, quotedAmountIn, "Swap amountIn should match quote");
@@ -334,7 +395,9 @@ contract FeeTest is Test, OpcodesDebug {
 
         // Verify fee calculation correctness
         uint256 rawOutputNeeded = (amountOut * BPS + (BPS - setup.feeOutBps - 1)) / (BPS - setup.feeOutBps);
-        uint256 expectedInputForRawOutput = (rawOutputNeeded * setup.balanceA + (setup.balanceB - rawOutputNeeded - 1)) / (setup.balanceB - rawOutputNeeded);
+        uint256 expectedInputForRawOutput =
+            (rawOutputNeeded * setup.balanceA + (setup.balanceB - rawOutputNeeded - 1)) /
+                (setup.balanceB - rawOutputNeeded);
         assertEq(swappedAmountIn, expectedInputForRawOutput, "Input should reflect fee-out calculation");
     }
 
@@ -349,24 +412,26 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0, // no feeIn
             feeOutBps: 0.10e9 // 10% fee
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         uint256 inputAmount = 10e18;
 
         // Step 1: ExactIn quoting - input 10e18 tokenA
         bytes memory exactInTakerData = _makeTakerData(TakerSetup({ isExactIn: true }), "");
-        (, uint256 outputFromExactIn,) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
+        (, uint256 outputFromExactIn, ) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
 
         // Step 2: ExactOut quoting - request the exact output amount from exactIn
         bytes memory exactOutTakerData = _makeTakerData(TakerSetup({ isExactIn: false }), "");
-        (uint256 inputForExactOut,,) = swapVM.asView().quote(order, tokenA, tokenB, outputFromExactIn, exactOutTakerData);
+        (uint256 inputForExactOut, , ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            outputFromExactIn,
+            exactOutTakerData
+        );
 
         // Step 3: Verify the exchange rate is consistent
-        assertEq(
-            inputForExactOut,
-            inputAmount,
-            "ExactIn and ExactOut should have same exchange rate for FEE_OUT"
-        );
+        assertEq(inputForExactOut, inputAmount, "ExactIn and ExactOut should have same exchange rate for FEE_OUT");
     }
 
     function test_FeeOut_ExchangeRateConsistency_ForLargeAmount() public view {
@@ -376,25 +441,33 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0, // no feeIn
             feeOutBps: 0.10e9 // 10% fee
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         // Step 0: ExactOut quoting - get input for 100% of balance B - fees
         bytes memory exactOutTakerData = _makeTakerData(TakerSetup({ isExactIn: false }), "");
-        (uint256 inputAmount,,) = swapVM.asView().quote(order, tokenA, tokenB, setup.balanceB * (BPS - setup.feeOutBps) / BPS - 1, exactOutTakerData);
+        (uint256 inputAmount, , ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            (setup.balanceB * (BPS - setup.feeOutBps)) / BPS - 1,
+            exactOutTakerData
+        );
 
         // Step 1: ExactIn quoting
         bytes memory exactInTakerData = _makeTakerData(TakerSetup({ isExactIn: true }), "");
-        (, uint256 outputFromExactIn,) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
+        (, uint256 outputFromExactIn, ) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
 
         // Step 2: ExactOut quoting - request the exact output amount from exactIn
-        (uint256 inputForExactOut,,) = swapVM.asView().quote(order, tokenA, tokenB, outputFromExactIn, exactOutTakerData);
+        (uint256 inputForExactOut, , ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            outputFromExactIn,
+            exactOutTakerData
+        );
 
         // Step 3: Verify the exchange rate is consistent
-        assertEq(
-            inputForExactOut,
-            inputAmount,
-            "ExactIn and ExactOut should have same exchange rate for FEE_OUT"
-        );
+        assertEq(inputForExactOut, inputAmount, "ExactIn and ExactOut should have same exchange rate for FEE_OUT");
     }
 
     function test_FeeIn_FeeOut_ConsistentExactInVsExactOut() public view {
@@ -404,22 +477,28 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0.10e9, // 10% feeIn
             feeOutBps: 0.15e9 // 15% feeOut
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         uint256 inputAmount = 33e18;
 
         // Step 1: ExactIn quoting - input 10e18 tokenA
         bytes memory exactInTakerData = _makeTakerData(TakerSetup({ isExactIn: true }), "");
-        (, uint256 outputFromExactIn,) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
+        (, uint256 outputFromExactIn, ) = swapVM.asView().quote(order, tokenA, tokenB, inputAmount, exactInTakerData);
 
         // Step 2: ExactOut quoting - request the exact output amount from exactIn
         bytes memory exactOutTakerData = _makeTakerData(TakerSetup({ isExactIn: false }), "");
-        (uint256 inputForExactOut,,) = swapVM.asView().quote(order, tokenA, tokenB, outputFromExactIn, exactOutTakerData);
+        (uint256 inputForExactOut, , ) = swapVM.asView().quote(
+            order,
+            tokenA,
+            tokenB,
+            outputFromExactIn,
+            exactOutTakerData
+        );
 
         // Step 3: Verify the exchange rate is consistent
         assertEq(
-            inputForExactOut * ONE / outputFromExactIn,
-            inputAmount * ONE / outputFromExactIn,
+            (inputForExactOut * ONE) / outputFromExactIn,
+            (inputAmount * ONE) / outputFromExactIn,
             "ExactIn and ExactOut should have same exchange rate for FEE_IN and FEE_OUT applied simultaneously"
         );
     }
@@ -433,7 +512,7 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0.10e9, // 10% fee
             feeOutBps: 0
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         ExactInOutSymmetry.assertSymmetryBatch(
             swapVM,
@@ -454,7 +533,7 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0,
             feeOutBps: 0.10e9 // 10% fee
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         ExactInOutSymmetry.assertSymmetryBatch(
             swapVM,
@@ -475,7 +554,7 @@ contract FeeTest is Test, OpcodesDebug {
             feeInBps: 0.05e9, // 5% fee in
             feeOutBps: 0.05e9 // 5% fee out
         });
-        (ISwapVM.Order memory order,) = _createOrder(setup);
+        (ISwapVM.Order memory order, ) = _createOrder(setup);
 
         ExactInOutSymmetry.assertSymmetryBatch(
             swapVM,

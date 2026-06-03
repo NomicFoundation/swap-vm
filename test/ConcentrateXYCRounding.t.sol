@@ -51,9 +51,7 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
         // Ensure tokenLt < tokenGt
         TokenMock tA = new TokenMock("TokenA", "A");
         TokenMock tB = new TokenMock("TokenB", "B");
-        (tokenLt, tokenGt) = address(tA) < address(tB)
-            ? (address(tA), address(tB))
-            : (address(tB), address(tA));
+        (tokenLt, tokenGt) = address(tA) < address(tB) ? (address(tA), address(tB)) : (address(tB), address(tA));
 
         // Fund both maker and taker
         for (uint256 i = 0; i < 2; i++) {
@@ -74,61 +72,67 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
         uint256 sqrtPmax
     ) internal view returns (ISwapVM.Order memory order, bytes memory sig) {
         Program memory p = ProgramBuilder.init(_opcodes());
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: bytes.concat(
-                p.build(Balances._dynamicBalancesXD, BalancesArgsBuilder.build(
-                    dynamic([tokenLt, tokenGt]),
-                    dynamic([bLt, bGt])
-                )),
-                p.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(FEE_BPS)),
-                p.build(XYCConcentrate._xycConcentrateGrowLiquidity2D,
-                    XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax)
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: bytes.concat(
+                    p.build(
+                        Balances._dynamicBalancesXD,
+                        BalancesArgsBuilder.build(dynamic([tokenLt, tokenGt]), dynamic([bLt, bGt]))
+                    ),
+                    p.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(FEE_BPS)),
+                    p.build(
+                        XYCConcentrate._xycConcentrateGrowLiquidity2D,
+                        XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax)
+                    )
                 )
-            )
-        }));
+            })
+        );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPK, swapVM.hash(order));
         sig = abi.encodePacked(r, s, v);
     }
 
     function _td(bytes memory sig, bool isExactIn) internal view returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: taker,
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: sig
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: taker,
+                    isExactIn: isExactIn,
+                    shouldUnwrapWeth: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: sig
+                })
+            );
     }
 
     /// @notice Helper: run N swap rounds (Lt→Gt and Gt→Lt alternating)
@@ -155,15 +159,20 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
         string memory label
     ) internal {
         uint256 avail = 100_000e18;
-        (uint256 initialL, uint256 bLt, uint256 bGt) =
-            XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(avail, avail, sqrtPspot, sqrtPmin, sqrtPmax);
+        (uint256 initialL, uint256 bLt, uint256 bGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
+            avail,
+            avail,
+            sqrtPspot,
+            sqrtPmin,
+            sqrtPmax
+        );
 
         (ISwapVM.Order memory order, bytes memory sig) = _createOrder(bLt, bGt, sqrtPmin, sqrtPmax);
         bytes32 h = swapVM.hash(order);
         bytes memory td = _td(sig, true);
 
         // Value-balanced swap sizes at spot price
-        uint256 pSpot = sqrtPspot * sqrtPspot / ONE;
+        uint256 pSpot = (sqrtPspot * sqrtPspot) / ONE;
         uint256 bLtInGt = Math.mulDiv(bLt, pSpot, ONE);
         uint256 smallSide = bLtInGt < bGt ? bLtInGt : bGt;
         uint256 swapSizeGt = smallSide / 100; // 1% of smaller side
@@ -181,7 +190,7 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
         uint256 sumSmall = 0;
         vm.startPrank(taker);
         for (uint256 i = 0; i < 100; i++) {
-            (, uint256 out,) = swapVM.swap(order, tokenLt, tokenGt, atomicLt, td);
+            (, uint256 out, ) = swapVM.swap(order, tokenLt, tokenGt, atomicLt, td);
             sumSmall += out;
         }
         vm.stopPrank();
@@ -190,7 +199,7 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
         // 1 big swap (reset state first)
 
         vm.prank(taker);
-        (, uint256 oneBig,) = swapVM.swap(order, tokenLt, tokenGt, atomicLt * 100, td);
+        (, uint256 oneBig, ) = swapVM.swap(order, tokenLt, tokenGt, atomicLt * 100, td);
 
         // Taker should NOT benefit from splitting
         assertLe(sumSmall, oneBig + 100, string.concat(label, ": accumulation exploit detected"));
@@ -212,7 +221,7 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
         assertLt(valueAfter, valueBefore, string.concat(label, ": taker profited from round-trips"));
 
         // === Check 3: Maker protection (liquidity grows) ===
-        (uint256 finalL,) = XYCConcentrateArgsBuilder.computeLiquidityAndPrice(
+        (uint256 finalL, ) = XYCConcentrateArgsBuilder.computeLiquidityAndPrice(
             swapVM.balances(h, tokenLt),
             swapVM.balances(h, tokenGt),
             sqrtPmin,
@@ -225,9 +234,9 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
     /// @notice Test 1: Standard range (0.8 - 1.25)
     function test_RoundingProtection_StandardRange() public {
         _testRoundingProtection(
-            ONE,                      // sqrtPspot = 1.0
-            Math.sqrt(0.8e36),       // sqrtPmin
-            Math.sqrt(1.25e36),      // sqrtPmax
+            ONE, // sqrtPspot = 1.0
+            Math.sqrt(0.8e36), // sqrtPmin
+            Math.sqrt(1.25e36), // sqrtPmax
             "StandardRange"
         );
     }
@@ -235,9 +244,9 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
     /// @notice Test 2: Narrow range (0.95 - 1.05) - maximum concentration
     function test_RoundingProtection_NarrowRange() public {
         _testRoundingProtection(
-            ONE,                      // sqrtPspot = 1.0
-            Math.sqrt(0.95e36),      // sqrtPmin
-            Math.sqrt(1.05e36),      // sqrtPmax
+            ONE, // sqrtPspot = 1.0
+            Math.sqrt(0.95e36), // sqrtPmin
+            Math.sqrt(1.05e36), // sqrtPmax
             "NarrowRange"
         );
     }
@@ -245,9 +254,9 @@ contract ConcentrateXYCRounding is Test, OpcodesDebug {
     /// @notice Test 3: Asymmetric range (0.5 - 1.05) - heavily skewed
     function test_RoundingProtection_AsymmetricRange() public {
         _testRoundingProtection(
-            ONE,                      // sqrtPspot = 1.0
-            Math.sqrt(0.5e36),       // sqrtPmin
-            Math.sqrt(1.05e36),      // sqrtPmax
+            ONE, // sqrtPspot = 1.0
+            Math.sqrt(0.5e36), // sqrtPmin
+            Math.sqrt(1.05e36), // sqrtPmax
             "AsymmetricRange"
         );
     }

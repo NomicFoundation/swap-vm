@@ -19,7 +19,10 @@ library BalancesArgsBuilder {
     error BalancesParsingMissingInitialBalances();
 
     function build(address[] memory tokens, uint256[] memory balances) internal pure returns (bytes memory) {
-        require(tokens.length == balances.length, BalancesArgsBuilderArraysLengthMismatch(tokens.length, balances.length));
+        require(
+            tokens.length == balances.length,
+            BalancesArgsBuilderArraysLengthMismatch(tokens.length, balances.length)
+        );
         bytes memory packed = abi.encodePacked((tokens.length).toUint16());
         for (uint256 i = 0; i < tokens.length; i++) {
             packed = abi.encodePacked(packed, tokens[i]);
@@ -27,7 +30,9 @@ library BalancesArgsBuilder {
         return abi.encodePacked(packed, balances);
     }
 
-    function parse(bytes calldata args) internal pure returns (uint256 tokensCount, bytes calldata tokens, bytes calldata initialBalances) {
+    function parse(
+        bytes calldata args
+    ) internal pure returns (uint256 tokensCount, bytes calldata tokens, bytes calldata initialBalances) {
         unchecked {
             tokensCount = uint16(bytes2(args.slice(0, 2, BalancesParsingMissingTokensCount.selector)));
             uint256 balancesOffset = 2 + 20 * tokensCount;
@@ -48,15 +53,17 @@ contract Balances {
     error DynamicBalancesLoadingRequiresSettingBothBalances(address tokenIn, address tokenOut, bytes tokens);
     error DynamicBalancesInitRequiresSettingBothBalances(address tokenIn, address tokenOut, bytes tokens);
 
-    mapping(bytes32 orderHash =>
-        mapping(address token => uint256)) public balances;
+    mapping(bytes32 orderHash => mapping(address token => uint256)) public balances;
 
     /// @dev Sets ctx.swap.balanceIn/Out from provided initial balances
     /// @param args.tokensCount       | 2 bytes
     /// @param args.tokens[]  | 20 bytes * args.tokensCount
     /// @param args.initialBalances[] | 32 bytes * args.tokensCount
     function _staticBalancesXD(Context memory ctx, bytes calldata args) internal pure {
-        require(ctx.swap.balanceIn == 0 && ctx.swap.balanceOut == 0, SetBalancesExpectZeroBalances(ctx.swap.balanceIn, ctx.swap.balanceOut));
+        require(
+            ctx.swap.balanceIn == 0 && ctx.swap.balanceOut == 0,
+            SetBalancesExpectZeroBalances(ctx.swap.balanceIn, ctx.swap.balanceOut)
+        );
 
         (uint256 tokensCount, bytes calldata tokens, bytes calldata initialBalances) = BalancesArgsBuilder.parse(args);
         bool foundTokenIn = false;
@@ -73,7 +80,10 @@ contract Balances {
             }
         }
 
-        require(foundTokenIn && foundTokenOut, StaticBalancesRequiresSettingBothBalances(ctx.query.tokenIn, ctx.query.tokenOut, tokens));
+        require(
+            foundTokenIn && foundTokenOut,
+            StaticBalancesRequiresSettingBothBalances(ctx.query.tokenIn, ctx.query.tokenOut, tokens)
+        );
     }
 
     /// @dev Load or init ctx.swap.balanceIn/Out from provided initial balances,
@@ -99,7 +109,11 @@ contract Balances {
         }
     }
 
-    function _loadBalances(Context memory ctx, uint256 tokensCount, bytes calldata tokens) private view returns (bool hasNonZeroBalances) {
+    function _loadBalances(
+        Context memory ctx,
+        uint256 tokensCount,
+        bytes calldata tokens
+    ) private view returns (bool hasNonZeroBalances) {
         hasNonZeroBalances = false;
         bool foundTokenIn = false;
         bool foundTokenOut = false;
@@ -121,10 +135,18 @@ contract Balances {
                 return hasNonZeroBalances;
             }
         }
-        require(foundTokenIn && foundTokenOut, DynamicBalancesLoadingRequiresSettingBothBalances(ctx.query.tokenIn, ctx.query.tokenOut, tokens));
+        require(
+            foundTokenIn && foundTokenOut,
+            DynamicBalancesLoadingRequiresSettingBothBalances(ctx.query.tokenIn, ctx.query.tokenOut, tokens)
+        );
     }
 
-    function _initBalances(Context memory ctx, uint256 tokensCount, bytes calldata tokens, bytes calldata initialBalances) private {
+    function _initBalances(
+        Context memory ctx,
+        uint256 tokensCount,
+        bytes calldata tokens,
+        bytes calldata initialBalances
+    ) private {
         bool foundTokenIn = false;
         bool foundTokenOut = false;
         for (uint256 i = 0; i < tokensCount; i++) {
@@ -143,6 +165,9 @@ contract Balances {
             }
         }
 
-        require(foundTokenIn && foundTokenOut, DynamicBalancesInitRequiresSettingBothBalances(ctx.query.tokenIn, ctx.query.tokenOut, tokens));
+        require(
+            foundTokenIn && foundTokenOut,
+            DynamicBalancesInitRequiresSettingBothBalances(ctx.query.tokenIn, ctx.query.tokenOut, tokens)
+        );
     }
 }

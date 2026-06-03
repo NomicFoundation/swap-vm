@@ -22,11 +22,7 @@ interface IExtruction {
         SwapRegisters calldata swap,
         bytes calldata args,
         bytes calldata takerData
-    ) external returns (
-        uint256 updatedNextPC,
-        uint256 choppedLength,
-        SwapRegisters memory updatedSwap
-    );
+    ) external returns (uint256 updatedNextPC, uint256 choppedLength, SwapRegisters memory updatedSwap);
 }
 
 /// @title IStaticExtruction - View-only external logic interface
@@ -44,11 +40,7 @@ interface IStaticExtruction {
         SwapRegisters calldata swap,
         bytes calldata args,
         bytes calldata takerData
-    ) external view returns (
-        uint256 updatedNextPC,
-        uint256 choppedLength,
-        SwapRegisters memory updatedSwap
-    );
+    ) external view returns (uint256 updatedNextPC, uint256 choppedLength, SwapRegisters memory updatedSwap);
 }
 
 /// @title Extruction - External Custom Logic Delegation

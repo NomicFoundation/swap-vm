@@ -40,13 +40,7 @@ library PeggedSwapArgsBuilder {
     /// @param args Configuration for pegged swap curve
     /// @return Packed bytes for inclusion in program bytecode
     function build(Args memory args) internal pure returns (bytes memory) {
-        return abi.encodePacked(
-            args.x0,
-            args.y0,
-            args.linearWidth,
-            args.rateLt,
-            args.rateGt
-        );
+        return abi.encodePacked(args.x0, args.y0, args.linearWidth, args.rateLt, args.rateGt);
     }
 
     function parse(bytes calldata data) internal pure returns (Args calldata args) {
@@ -73,12 +67,11 @@ library PeggedSwapArgsBuilder {
         address tokenIn,
         address tokenOut
     ) internal pure returns (uint256 rateIn, uint256 rateOut, uint256 x0, uint256 y0) {
-        (rateIn, rateOut, x0, y0) = tokenIn < tokenOut ?
-            (args.rateLt, args.rateGt, args.x0, args.y0) :
-            (args.rateGt, args.rateLt, args.y0, args.x0);
+        (rateIn, rateOut, x0, y0) = tokenIn < tokenOut
+            ? (args.rateLt, args.rateGt, args.x0, args.y0)
+            : (args.rateGt, args.rateLt, args.y0, args.x0);
     }
 }
-
 
 /// @title PeggedSwap - Square-root linear swap curve for pegged assets
 /// @notice Formula: √(x/X₀) + √(y/Y₀) + A(x/X₀ + y/Y₀) = 1 + A
@@ -133,24 +126,15 @@ contract PeggedSwap {
         // ╚═══════════════════════════════════════════════════════════════════════════╝
 
         // Get rate multipliers based on token addresses
-        (uint256 rateIn, uint256 rateOut, uint256 x0_init, uint256 y0_init) = PeggedSwapArgsBuilder.parseRatesAndBalances(
-            config,
-            ctx.query.tokenIn,
-            ctx.query.tokenOut
-        );
+        (uint256 rateIn, uint256 rateOut, uint256 x0_init, uint256 y0_init) = PeggedSwapArgsBuilder
+            .parseRatesAndBalances(config, ctx.query.tokenIn, ctx.query.tokenOut);
 
         // Apply rate multipliers to normalize to common scale (1e18)
         uint256 x0 = x0_raw * rateIn;
         uint256 y0 = y0_raw * rateOut;
 
         // Calculate target invariant from initial state (using normalized values)
-        uint256 targetInvariant = PeggedSwapMath.invariantFromReserves(
-            x0,
-            y0,
-            x0_init,
-            y0_init,
-            config.linearWidth
-        );
+        uint256 targetInvariant = PeggedSwapMath.invariantFromReserves(x0, y0, x0_init, y0_init, config.linearWidth);
 
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, PeggedSwapRecomputeDetected());
@@ -159,7 +143,7 @@ contract PeggedSwap {
 
             // Solve for y1: given x1, find y1 that maintains invariant
             // x1 * ONE / x0 - safe: x1 ≤ 1e24, ONE = 1e27 → 1e51 < 1e77
-            uint256 u1 = x1 * PeggedSwapMath.ONE / x0_init;  // Round DOWN u1
+            uint256 u1 = (x1 * PeggedSwapMath.ONE) / x0_init; // Round DOWN u1
             uint256 v1 = PeggedSwapMath.solve(u1, config.linearWidth, targetInvariant);
 
             // Round UP y1 (normalized) to ensure amountOut rounds DOWN (protects maker)
@@ -176,7 +160,7 @@ contract PeggedSwap {
 
             // Solve for x1: given y1, find x1 that maintains invariant
             // y1 * ONE / y0 - safe: y1 ≤ 1e24, ONE = 1e27 → 1e51 < 1e77
-            uint256 v1 = y1 * PeggedSwapMath.ONE / y0_init;  // Round DOWN v1
+            uint256 v1 = (y1 * PeggedSwapMath.ONE) / y0_init; // Round DOWN v1
             uint256 u1 = PeggedSwapMath.solve(v1, config.linearWidth, targetInvariant);
 
             // Round UP x1 (normalized) to ensure amountIn rounds UP (protects maker)

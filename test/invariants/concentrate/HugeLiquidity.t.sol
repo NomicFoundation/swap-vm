@@ -17,7 +17,7 @@ contract HugeLiquidity is ConcentrateXYCFeesInvariants {
         super.setUp();
 
         // Huge liquidity (large but safe for uint128)
-        availableLiquidity = 2.5e25;  // 25 million tokens with 18 decimals
+        availableLiquidity = 2.5e25; // 25 million tokens with 18 decimals
 
         // Standard concentration range
         sqrtPriceMin = Math.sqrt(0.8e36);
@@ -27,8 +27,8 @@ contract HugeLiquidity is ConcentrateXYCFeesInvariants {
         _computeInitialBalances();
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        flatFeeInBps = 0.003e9; // 0.3%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Large test amounts (but small relative to huge pool)
         testAmounts = new uint256[](5);
@@ -38,7 +38,7 @@ contract HugeLiquidity is ConcentrateXYCFeesInvariants {
         testAmounts[3] = 1e23;
         testAmounts[4] = 10e23;
 
-        symmetryTolerance = 0;  // 0 wei tolerance for huge numbers
+        symmetryTolerance = 0; // 0 wei tolerance for huge numbers
         additivityTolerance = 1; // 1 wei tolerance (terminal concentrate rounding)
     }
 }

@@ -4,9 +4,9 @@ pragma solidity 0.8.30;
 /// @custom:license-url https://github.com/1inch/swap-vm/blob/main/LICENSES/SwapVM-1.1.txt
 /// @custom:copyright © 2025 Degensoft Ltd
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IProtocolFeeProvider} from "../src/instructions/interfaces/IProtocolFeeProvider.sol";
+import { IProtocolFeeProvider } from "../src/instructions/interfaces/IProtocolFeeProvider.sol";
 
 /**
  * @title ProtocolFeeProviderMock
@@ -79,7 +79,7 @@ contract ProtocolFeeProviderMock is IProtocolFeeProvider, Ownable {
      * @param feeBps New fee rate in basis points (1e9 scale)
      * @param to New address to receive protocol fees
      */
-    function setFeeBpsAndRecipient(uint32 feeBps, address to) onlyOwner external {
+    function setFeeBpsAndRecipient(uint32 feeBps, address to) external onlyOwner {
         assembly ("memory-safe") {
             let value := feeBps
             value := or(value, shl(32, to)) // set to

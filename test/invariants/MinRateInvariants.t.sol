@@ -87,16 +87,9 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         TokenMock(tokenIn).mint(taker, amount * 10);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         // Verify the swap consumed the expected input amount
-
 
         return (actualIn, actualOut);
     }
@@ -112,22 +105,22 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([uint256(1000e18), uint256(3000e18)])  // 1:3 base rate
-                )),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                    dynamic([uint256(1000e18), uint256(3000e18)]) // 1:3 base rate
+                )
+            ),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
 
         // First verify MinRate effect: quote with 1 tokenA input
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (uint256 quotedIn, uint256 quotedOut,) = swapVM.asView().quote(
+        (uint256 quotedIn, uint256 quotedOut, ) = swapVM.asView().quote(
             order,
             address(tokenA),
             address(tokenB),
@@ -143,13 +136,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         config.skipAdditivity = true;
         config.skipMonotonicity = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -165,17 +152,16 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([uint256(1000e18), uint256(2500e18)])  // Start with 1:2.5 rate
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                    dynamic([uint256(1000e18), uint256(2500e18)]) // Start with 1:2.5 rate
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -185,7 +171,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         // Verify MinRate effect
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (uint256 quotedIn, uint256 quotedOut,) = swapVM.asView().quote(
+        (uint256 quotedIn, uint256 quotedOut, ) = swapVM.asView().quote(
             order,
             address(tokenA),
             address(tokenB),
@@ -198,13 +184,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -220,17 +200,16 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([uint256(1000e18), uint256(3000e18)])  // Start with 1:3 rate
-                )),
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                    dynamic([uint256(1000e18), uint256(3000e18)]) // Start with 1:3 rate
+                )
+            ),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -240,7 +219,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         // Verify MinRate effect
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (uint256 quotedIn, uint256 quotedOut,) = swapVM.asView().quote(
+        (uint256 quotedIn, uint256 quotedOut, ) = swapVM.asView().quote(
             order,
             address(tokenA),
             address(tokenB),
@@ -253,13 +232,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -273,17 +246,16 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([uint256(1000e18), uint256(5000e18)])  // 1:5 base rate (very generous)
-                )),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                    dynamic([uint256(1000e18), uint256(5000e18)]) // 1:5 base rate (very generous)
+                )
+            ),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -291,14 +263,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         // Without MinRate: 1% fee on input reduces effective balance
         // Base would give ~5e18 output, MinRate caps at 2e18
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (, uint256 amountOut) = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        (, uint256 amountOut) = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
         // Actual output is slightly less due to rounding: 1999999800000000000
         assertEq(amountOut, 1999999800000000000, "MinRate should cap output at ~2e18");
 
@@ -306,13 +271,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -326,17 +285,16 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([uint256(1000e18), uint256(6000e18)])  // 1:6 base rate (very generous)
-                )),
-            program.build(_flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                    dynamic([uint256(1000e18), uint256(6000e18)]) // 1:6 base rate (very generous)
+                )
+            ),
+            program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -344,14 +302,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         // Without MinRate: base would give 6e18, minus 2% fee = 5.88e18
         // With MinRate: caps at 2e18, minus 2% fee = 1.96e18
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (, uint256 amountOut) = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        (, uint256 amountOut) = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
         // Actual output is slightly less due to rounding: 1999999600000000000
         assertEq(amountOut, 1999999600000000000, "Should get min rate minus output fee");
 
@@ -359,13 +310,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -378,17 +323,16 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([uint256(1000e18), uint256(8000e18)])  // 1:8 base rate (extremely generous)
-                )),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                    dynamic([uint256(1000e18), uint256(8000e18)]) // 1:8 base rate (extremely generous)
+                )
+            ),
+            program.build(_protocolFeeAmountOutXD, FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -396,14 +340,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         // Without MinRate: base would give 8e18, minus 1.5% fee = 7.88e18
         // With MinRate: caps at 1.85e18, minus 1.5% fee = 1.82225e18
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (, uint256 amountOut) = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        (, uint256 amountOut) = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
         // Actual output is slightly less due to rounding: 1849999722500000000
         assertEq(amountOut, 1849999722500000000, "Should get min rate minus protocol fee");
 
@@ -411,13 +348,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -435,21 +366,21 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([uint256(1000e18), uint256(7000e18)])  // 1:7 base rate (very generous)
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(flatFeeBps)),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(protocolFeeBps, protocolFeeCollector)),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                    dynamic([uint256(1000e18), uint256(7000e18)]) // 1:7 base rate (very generous)
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(flatFeeBps)),
+            program.build(
+                _protocolFeeAmountOutXD,
+                FeeArgsBuilder.buildProtocolFee(protocolFeeBps, protocolFeeCollector)
+            ),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -460,14 +391,7 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         // Without MinRate: even with fees, would give much more than 1.7e18
         // With MinRate: caps at 1.7e18, then 1% protocol fee
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
-        (, uint256 amountOut) = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        (, uint256 amountOut) = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
         // MinRate caps at 1:1.7, then 1% protocol fee. Actual: 1699999745000008500
         assertEq(amountOut, 1699999745000008500, "Should get min rate minus protocol fee");
 
@@ -475,37 +399,34 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -519,27 +440,29 @@ contract MinRateInvariants is Test, OpcodesDebug, CoreInvariants {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

@@ -39,39 +39,39 @@ contract LargeDifferentDecimals is PeggedFeesInvariants {
         // Large pool: 1M tokens each (in respective decimals)
         // TokenA: 1M tokens with 18 decimals = 1e6 * 1e18 = 1e24
         // TokenB: 1M tokens with 6 decimals = 1e6 * 1e6 = 1e12
-        balanceA = 1_000_000e18;   // 1M tokens with 18 decimals
-        balanceB = 1_000_000e6;    // 1M tokens with 6 decimals
+        balanceA = 1_000_000e18; // 1M tokens with 18 decimals
+        balanceB = 1_000_000e6; // 1M tokens with 6 decimals
 
         // Determine rates based on actual token addresses
         // TokenA has 18 decimals, TokenB has 6 decimals
         // We need to scale TokenB by 1e12 to match TokenA
         if (address(tokenA) < address(tokenB)) {
             // tokenA is Lt, tokenB is Gt
-            rateLt = 1;      // TokenA (18 dec)
-            rateGt = 1e12;   // TokenB (6 dec) -> scales to 18
+            rateLt = 1; // TokenA (18 dec)
+            rateGt = 1e12; // TokenB (6 dec) -> scales to 18
         } else {
             // tokenB is Lt, tokenA is Gt
-            rateLt = 1e12;   // TokenB (6 dec) -> scales to 18
-            rateGt = 1;      // TokenA (18 dec)
+            rateLt = 1e12; // TokenB (6 dec) -> scales to 18
+            rateGt = 1; // TokenA (18 dec)
         }
 
         // x0 and y0 should match the initial balance * rate for normalization
         // Both become 1e24 after rate scaling
         x0 = 1_000_000e18;
-        y0 = 1_000_000e18;  // 1e12 * 1e12 = 1e24 -> after scaling
+        y0 = 1_000_000e18; // 1e12 * 1e12 = 1e24 -> after scaling
 
         // Standard linear width
         linearWidth = 0.8e27;
 
         // Test amounts - reasonable sizes for 1M pool
         testAmounts = new uint256[](3);
-        testAmounts[0] = 1000e18;    // 1K tokens
-        testAmounts[1] = 10_000e18;  // 10K tokens
+        testAmounts[0] = 1000e18; // 1K tokens
+        testAmounts[1] = 10_000e18; // 10K tokens
         testAmounts[2] = 100_000e18; // 100K tokens (10% of pool)
 
         testAmountsExactOut = new uint256[](3);
-        testAmountsExactOut[0] = 1000e6;    // 1K tokens (6 decimals)
-        testAmountsExactOut[1] = 10_000e6;  // 10K tokens
+        testAmountsExactOut[0] = 1000e6; // 1K tokens (6 decimals)
+        testAmountsExactOut[1] = 10_000e6; // 10K tokens
         testAmountsExactOut[2] = 100_000e6; // 100K tokens
 
         flatFeeInBps = 0.003e9;

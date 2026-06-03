@@ -19,8 +19,8 @@ contract ImbalancedPoolHighFees is PeggedFeesInvariants {
         linearWidth = 0.5e27;
 
         // High fees
-        flatFeeInBps = 0.05e9;   // 5%
-        flatFeeOutBps = 0.05e9;  // 5%
+        flatFeeInBps = 0.05e9; // 5%
+        flatFeeOutBps = 0.05e9; // 5%
 
         testAmounts = new uint256[](3);
         testAmounts[0] = 5e18;
@@ -32,7 +32,7 @@ contract ImbalancedPoolHighFees is PeggedFeesInvariants {
         testAmountsExactOut[1] = 50e18;
         testAmountsExactOut[2] = 100e18;
 
-        symmetryTolerance = 100;  // Higher tolerance for imbalanced pools
+        symmetryTolerance = 100; // Higher tolerance for imbalanced pools
         additivityTolerance = 10;
         // Higher rounding tolerance for imbalanced + high fees (7% = 700 bps)
         roundingToleranceBps = 700;

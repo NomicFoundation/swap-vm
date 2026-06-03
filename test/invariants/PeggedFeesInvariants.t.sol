@@ -26,7 +26,6 @@ import { ProtocolFeeProviderMock } from "../../mocks/ProtocolFeeProviderMock.sol
 
 import { CoreInvariants } from "./CoreInvariants.t.sol";
 
-
 /**
  * @title FeeConfig
  * @notice Configuration for all fee types. Zero value means fee is disabled.
@@ -41,7 +40,6 @@ struct FeeConfig {
     address dynamicFeeProvider;
     address feeRecipient;
 }
-
 
 /**
  * @title PeggedFeesInvariants
@@ -67,22 +65,22 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
     uint256 internal balanceB = 1000e18;
 
     // PeggedSwap config (using 1e27 scale for x0/y0/linearWidth to match PeggedSwapMath.ONE)
-    uint256 internal x0 = 1000e18;        // Initial X reserve (normalization)
-    uint256 internal y0 = 1000e18;        // Initial Y reserve (normalization)
+    uint256 internal x0 = 1000e18; // Initial X reserve (normalization)
+    uint256 internal y0 = 1000e18; // Initial Y reserve (normalization)
     uint256 internal linearWidth = 0.8e27; // A parameter (0.8 = mostly linear)
-    uint256 internal rateLt = 1;        // Rate for lower address token (scales 1e18 -> 1e27)
-    uint256 internal rateGt = 1;        // Rate for greater address token (scales 1e18 -> 1e27)
+    uint256 internal rateLt = 1; // Rate for lower address token (scales 1e18 -> 1e27)
+    uint256 internal rateGt = 1; // Rate for greater address token (scales 1e18 -> 1e27)
 
     // Flat fees
-    uint32 internal flatFeeInBps = 0.003e9;    // 0.3%
-    uint32 internal flatFeeOutBps = 0.005e9;   // 0.5%
+    uint32 internal flatFeeInBps = 0.003e9; // 0.3%
+    uint32 internal flatFeeOutBps = 0.005e9; // 0.5%
 
     // Progressive fees
-    uint32 internal progressiveFeeInBps = 0.1e9;   // 10%
-    uint32 internal progressiveFeeOutBps = 0.1e9;  // 10%
+    uint32 internal progressiveFeeInBps = 0.1e9; // 10%
+    uint32 internal progressiveFeeOutBps = 0.1e9; // 10%
 
     // Protocol fee
-    uint32 internal protocolFeeOutBps = 0.002e9;   // 0.2%
+    uint32 internal protocolFeeOutBps = 0.002e9; // 0.2%
     address internal feeRecipient = address(0xFEE);
 
     // Test amounts for invariants
@@ -160,13 +158,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         TokenMock(tokenIn).mint(taker, mintAmount);
 
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         return (actualIn, actualOut);
     }
@@ -180,44 +172,68 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
     ) internal view returns (bytes memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
 
-        return bytes.concat(
-            // Protocol fees BEFORE balances
-            (fees.protocolFeeOutBps > 0) ? program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(fees.protocolFeeOutBps, fees.feeRecipient)) : bytes(""),
-            (fees.protocolFeeInBps > 0) ? program.build(_protocolFeeAmountInXD,
-                FeeArgsBuilder.buildProtocolFee(fees.protocolFeeInBps, fees.feeRecipient)) : bytes(""),
-            (fees.dynamicFeeProvider != address(0)) ? program.build(_dynamicProtocolFeeAmountInXD,
-                FeeArgsBuilder.buildDynamicProtocolFee(fees.dynamicFeeProvider)) : bytes(""),
-
-            // Balances
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balanceA, _balanceB])
-                )),
-
-            // Regular fees AFTER balances
-            (fees.flatFeeInBps > 0) ? program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(fees.flatFeeInBps)) : bytes(""),
-            (fees.flatFeeOutBps > 0) ? program.build(_flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(fees.flatFeeOutBps)) : bytes(""),
-            (fees.progressiveFeeInBps > 0) ? program.build(_progressiveFeeInXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(fees.progressiveFeeInBps)) : bytes(""),
-            (fees.progressiveFeeOutBps > 0) ? program.build(_progressiveFeeOutXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(fees.progressiveFeeOutBps)) : bytes(""),
-
-            // PeggedSwap instruction
-            program.build(_peggedSwapGrowPriceRange2D,
-                PeggedSwapArgsBuilder.build(
-                    PeggedSwapArgsBuilder.Args({
-                        x0: x0,
-                        y0: y0,
-                        linearWidth: linearWidth,
-                        rateLt: rateLt,
-                        rateGt: rateGt
-                    })
-                ))
-        );
+        return
+            bytes.concat(
+                // Protocol fees BEFORE balances
+                (fees.protocolFeeOutBps > 0)
+                    ? program.build(
+                        _protocolFeeAmountOutXD,
+                        FeeArgsBuilder.buildProtocolFee(fees.protocolFeeOutBps, fees.feeRecipient)
+                    )
+                    : bytes(""),
+                (fees.protocolFeeInBps > 0)
+                    ? program.build(
+                        _protocolFeeAmountInXD,
+                        FeeArgsBuilder.buildProtocolFee(fees.protocolFeeInBps, fees.feeRecipient)
+                    )
+                    : bytes(""),
+                (fees.dynamicFeeProvider != address(0))
+                    ? program.build(
+                        _dynamicProtocolFeeAmountInXD,
+                        FeeArgsBuilder.buildDynamicProtocolFee(fees.dynamicFeeProvider)
+                    )
+                    : bytes(""),
+                // Balances
+                program.build(
+                    _dynamicBalancesXD,
+                    BalancesArgsBuilder.build(
+                        dynamic([address(tokenA), address(tokenB)]),
+                        dynamic([_balanceA, _balanceB])
+                    )
+                ),
+                // Regular fees AFTER balances
+                (fees.flatFeeInBps > 0)
+                    ? program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(fees.flatFeeInBps))
+                    : bytes(""),
+                (fees.flatFeeOutBps > 0)
+                    ? program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(fees.flatFeeOutBps))
+                    : bytes(""),
+                (fees.progressiveFeeInBps > 0)
+                    ? program.build(
+                        _progressiveFeeInXD,
+                        FeeArgsBuilderExperimental.buildProgressiveFee(fees.progressiveFeeInBps)
+                    )
+                    : bytes(""),
+                (fees.progressiveFeeOutBps > 0)
+                    ? program.build(
+                        _progressiveFeeOutXD,
+                        FeeArgsBuilderExperimental.buildProgressiveFee(fees.progressiveFeeOutBps)
+                    )
+                    : bytes(""),
+                // PeggedSwap instruction
+                program.build(
+                    _peggedSwapGrowPriceRange2D,
+                    PeggedSwapArgsBuilder.build(
+                        PeggedSwapArgsBuilder.Args({
+                            x0: x0,
+                            y0: y0,
+                            linearWidth: linearWidth,
+                            rateLt: rateLt,
+                            rateGt: rateGt
+                        })
+                    )
+                )
+            );
     }
 
     function _config(ISwapVM.Order memory order) internal view returns (InvariantConfig memory) {
@@ -236,16 +252,17 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
     }
 
     function _feeConfig() internal view returns (FeeConfig memory) {
-        return FeeConfig({
-            flatFeeInBps: 0,
-            flatFeeOutBps: 0,
-            progressiveFeeInBps: 0,
-            progressiveFeeOutBps: 0,
-            protocolFeeInBps: 0,
-            protocolFeeOutBps: 0,
-            dynamicFeeProvider: address(0),
-            feeRecipient: feeRecipient
-        });
+        return
+            FeeConfig({
+                flatFeeInBps: 0,
+                flatFeeOutBps: 0,
+                progressiveFeeInBps: 0,
+                progressiveFeeOutBps: 0,
+                protocolFeeInBps: 0,
+                protocolFeeOutBps: 0,
+                dynamicFeeProvider: address(0),
+                feeRecipient: feeRecipient
+            });
     }
 
     // ====== Pegged Tests ======
@@ -256,13 +273,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedFlatFeeIn() public {
@@ -272,13 +283,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedFlatFeeOut() public {
@@ -291,13 +296,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // FlatFeeOut violates additivity by design
         config.skipAdditivity = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedProgressiveFeeIn() public {
@@ -310,13 +309,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         config.skipAdditivity = true;
         config.skipSymmetry = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedProgressiveFeeOut() public {
@@ -329,13 +322,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         config.skipAdditivity = true;
         config.skipSymmetry = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedProtocolFee() public virtual {
@@ -351,13 +338,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // Use max of class additivityTolerance or minimum for protocol fee
         config.additivityTolerance = additivityTolerance > 1 ? additivityTolerance : 1;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedProtocolFeeIn() public virtual {
@@ -370,13 +351,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // Protocol fee causes 1 wei rounding in additivity
         config.additivityTolerance = additivityTolerance > 1 ? additivityTolerance : 1;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedDynamicProtocolFeeIn() public virtual {
@@ -396,13 +371,7 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // Dynamic protocol fee causes 1 wei rounding in additivity
         config.additivityTolerance = additivityTolerance > 1 ? additivityTolerance : 1;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     function test_PeggedMultipleFees() public {
@@ -419,37 +388,34 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // Use configured tolerance (default 200, but can be overridden for different decimals)
         config.roundingToleranceBps = roundingToleranceBps > 200 ? roundingToleranceBps : 200;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     // Helper functions
     function _createOrder(bytes memory program) internal view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -463,27 +429,29 @@ contract PeggedFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

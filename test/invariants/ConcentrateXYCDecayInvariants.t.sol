@@ -69,16 +69,15 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
         uint256 sqrtPmin,
         uint256 sqrtPmax
     ) internal view returns (uint256 balA, uint256 balB) {
-        (, uint256 actualLt, uint256 actualGt) =
-            XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-                available, available, 1e18, sqrtPmin, sqrtPmax
-            );
-        (balA, balB) = address(tokenA) < address(tokenB)
-            ? (actualLt, actualGt)
-            : (actualGt, actualLt);
+        (, uint256 actualLt, uint256 actualGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
+            available,
+            available,
+            1e18,
+            sqrtPmin,
+            sqrtPmax
+        );
+        (balA, balB) = address(tokenA) < address(tokenB) ? (actualLt, actualGt) : (actualGt, actualLt);
     }
-
-
 
     /**
      * @notice Implementation of _executeSwap for real swap execution
@@ -95,13 +94,7 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
         TokenMock(tokenIn).mint(taker, amount * 10);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         // Verify the swap consumed the expected input amount
 
@@ -118,15 +111,12 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
         uint16 decayPeriod = 300; // 5 minutes
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_xycConcentrateGrowLiquidity2D, XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -135,13 +125,7 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = _signAndPackTakerData(order, true, 0);
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -149,10 +133,10 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
      */
     function test_ConcentrateVariousDecayPeriods() public {
         uint16[] memory decayPeriods = new uint16[](4);
-        decayPeriods[0] = 60;     // 1 minute
-        decayPeriods[1] = 300;    // 5 minutes
-        decayPeriods[2] = 1800;   // 30 minutes
-        decayPeriods[3] = 7200;   // 2 hours
+        decayPeriods[0] = 60; // 1 minute
+        decayPeriods[1] = 300; // 5 minutes
+        decayPeriods[2] = 1800; // 30 minutes
+        decayPeriods[3] = 7200; // 2 hours
 
         for (uint256 i = 0; i < decayPeriods.length; i++) {
             _testDecayPeriod(decayPeriods[i]);
@@ -168,15 +152,12 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
         (uint256 balanceA, uint256 balanceB) = _concentrateBalances(1500e18, sqrtPmin, sqrtPmax);
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_xycConcentrateGrowLiquidity2D, XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -188,37 +169,34 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = _signAndPackTakerData(order, true, 0);
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -232,27 +210,29 @@ contract ConcentrateXYCDecayInvariants is Test, OpcodesDebug, CoreInvariants {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

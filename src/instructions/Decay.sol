@@ -42,7 +42,7 @@ library DecayingOffsetLib {
             return 0;
         }
         uint256 timeLeft = expiration - block.timestamp;
-        return offset * timeLeft / decayPeriod;
+        return (offset * timeLeft) / decayPeriod;
     }
 
     /// @dev Assembly implementation to make sure exactly 1 SLOAD is being used
@@ -72,9 +72,7 @@ contract Decay {
 
     /// @dev Offsets for balances in both directions: _offsets[orderHash][token][swapDirection]
     /// Should work for multi-token systems, swapDirection would mean buy/sell
-    mapping(bytes32 orderHash =>
-        mapping(address token =>
-            mapping(bool buyOrSell => DecayingOffset))) internal _offsets;
+    mapping(bytes32 orderHash => mapping(address token => mapping(bool buyOrSell => DecayingOffset))) internal _offsets;
 
     /// @notice Applies virtual balance adjustment based on time since last trade (Mooniswap-style MEV protection)
     /// @dev Gradually restores reserves to actual values over decay period
@@ -84,7 +82,10 @@ contract Decay {
     ///   quote() and swap().
     /// @param args.period | 2 bytes (uint16)
     function _decayXD(Context memory ctx, bytes calldata args) internal {
-        require(ctx.swap.amountIn == 0 || ctx.swap.amountOut == 0, DecayShouldBeCalledBeforeSwapAmountsComputation(ctx.swap.amountIn, ctx.swap.amountOut));
+        require(
+            ctx.swap.amountIn == 0 || ctx.swap.amountOut == 0,
+            DecayShouldBeCalledBeforeSwapAmountsComputation(ctx.swap.amountIn, ctx.swap.amountOut)
+        );
 
         // Adjust balances by decayed offsets
         uint256 period = DecayArgsBuilder.parse(args);

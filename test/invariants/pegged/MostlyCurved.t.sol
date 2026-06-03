@@ -15,7 +15,7 @@ contract MostlyCurved is PeggedFeesInvariants {
         balanceB = 1000e18;
         x0 = 1000e18;
         y0 = 1000e18;
-        linearWidth = 0.2e27;  // A = 0.2: mostly curved
+        linearWidth = 0.2e27; // A = 0.2: mostly curved
 
         testAmounts = new uint256[](3);
         testAmounts[0] = 10e18;

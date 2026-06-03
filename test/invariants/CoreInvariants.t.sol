@@ -65,18 +65,18 @@ abstract contract CoreInvariants is Test {
 
     // Configuration for invariant testing
     struct InvariantConfig {
-        uint256 symmetryTolerance;           // Max allowed difference for symmetry (default: 2 wei)
-        uint256 additivityTolerance;         // Max allowed rounding difference for additivity (default: 0)
-        uint256 roundingToleranceBps;        // Rounding check tolerance in bps (default: 100 = 1%)
-        uint256 monotonicityToleranceBps;    // Monotonicity tolerance in bps (default: 0, strict)
-        uint256[] testAmounts;               // Amounts to test with for exactIn (default: [1e18, 10e18, 50e18])
-        uint256[] testAmountsExactOut;       // Amounts to test with for exactOut (if empty, uses testAmounts)
-        bool skipAdditivity;                 // Skip additivity check (for non-AMM orders)
-        bool skipMonotonicity;               // Skip monotonicity check (for flat rate orders)
-        bool skipSpotPrice;                  // Skip spot price check (for complex fee structures)
-        bool skipSymmetry;                   // Skip symmetry check (for complex fee structures)
-        bytes exactInTakerData;              // Custom taker data for exactIn
-        bytes exactOutTakerData;             // Custom taker data for exactOut
+        uint256 symmetryTolerance; // Max allowed difference for symmetry (default: 2 wei)
+        uint256 additivityTolerance; // Max allowed rounding difference for additivity (default: 0)
+        uint256 roundingToleranceBps; // Rounding check tolerance in bps (default: 100 = 1%)
+        uint256 monotonicityToleranceBps; // Monotonicity tolerance in bps (default: 0, strict)
+        uint256[] testAmounts; // Amounts to test with for exactIn (default: [1e18, 10e18, 50e18])
+        uint256[] testAmountsExactOut; // Amounts to test with for exactOut (if empty, uses testAmounts)
+        bool skipAdditivity; // Skip additivity check (for non-AMM orders)
+        bool skipMonotonicity; // Skip monotonicity check (for flat rate orders)
+        bool skipSpotPrice; // Skip spot price check (for complex fee structures)
+        bool skipSymmetry; // Skip symmetry check (for complex fee structures)
+        bytes exactInTakerData; // Custom taker data for exactIn
+        bytes exactOutTakerData; // Custom taker data for exactOut
     }
 
     /**
@@ -92,13 +92,7 @@ abstract contract CoreInvariants is Test {
         address tokenIn,
         address tokenOut
     ) internal {
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            tokenIn,
-            tokenOut,
-            _getDefaultConfig()
-        );
+        assertAllInvariantsWithConfig(swapVM, order, tokenIn, tokenOut, _getDefaultConfig());
     }
 
     /**
@@ -139,9 +133,8 @@ abstract contract CoreInvariants is Test {
         }
 
         // Use testAmountsExactOut if set, otherwise use testAmounts
-        uint256[] memory exactOutAmounts = config.testAmountsExactOut.length > 0
-            ? config.testAmountsExactOut
-            : config.testAmounts;
+        uint256[] memory exactOutAmounts =
+            config.testAmountsExactOut.length > 0 ? config.testAmountsExactOut : config.testAmounts;
 
         for (uint256 i = 0; i < exactOutAmounts.length; i++) {
             assertQuoteSwapConsistencyInvariant(
@@ -208,13 +201,7 @@ abstract contract CoreInvariants is Test {
         }
 
         // Always test balance sufficiency
-        assertBalanceSufficiencyInvariant(
-            swapVM,
-            order,
-            tokenIn,
-            tokenOut,
-            config.exactInTakerData
-        );
+        assertBalanceSufficiencyInvariant(swapVM, order, tokenIn, tokenOut, config.exactInTakerData);
     }
 
     /**
@@ -232,17 +219,12 @@ abstract contract CoreInvariants is Test {
         bytes memory exactOutTakerData
     ) internal view {
         // ExactIn: amountIn → ?
-        (, uint256 amountOut,) = swapVM.asView().quote(
-            order, tokenIn, tokenOut, amountIn, exactInTakerData
-        );
+        (, uint256 amountOut, ) = swapVM.asView().quote(order, tokenIn, tokenOut, amountIn, exactInTakerData);
 
         // ExactOut: ? → amountOut
-        (uint256 amountInBack,,) = swapVM.asView().quote(
-            order, tokenIn, tokenOut, amountOut, exactOutTakerData
-        );
+        (uint256 amountInBack, , ) = swapVM.asView().quote(order, tokenIn, tokenOut, amountOut, exactOutTakerData);
 
-        uint256 diff = amountInBack > amountIn ?
-            amountInBack - amountIn : amountIn - amountInBack;
+        uint256 diff = amountInBack > amountIn ? amountInBack - amountIn : amountIn - amountInBack;
 
         assertLe(
             diff,
@@ -281,9 +263,7 @@ abstract contract CoreInvariants is Test {
         uint256 snapshot = vm.snapshot();
 
         // Execute single swap of A+B
-        (, uint256 singleOut) = _executeSwap(
-            swapVM, order, tokenIn, tokenOut, amountA + amountB, takerData
-        );
+        (, uint256 singleOut) = _executeSwap(swapVM, order, tokenIn, tokenOut, amountA + amountB, takerData);
 
         // Restore state to before the swap
         vm.revertTo(snapshot);
@@ -291,14 +271,10 @@ abstract contract CoreInvariants is Test {
         snapshot = vm.snapshot();
 
         // Execute swap A
-        (, uint256 outA) = _executeSwap(
-            swapVM, order, tokenIn, tokenOut, amountA, takerData
-        );
+        (, uint256 outA) = _executeSwap(swapVM, order, tokenIn, tokenOut, amountA, takerData);
 
         // Execute swap B (note: state has changed after swap A)
-        (, uint256 outB) = _executeSwap(
-            swapVM, order, tokenIn, tokenOut, amountB, takerData
-        );
+        (, uint256 outB) = _executeSwap(swapVM, order, tokenIn, tokenOut, amountB, takerData);
 
         vm.revertTo(snapshot);
 
@@ -342,9 +318,7 @@ abstract contract CoreInvariants is Test {
         bytes memory takerData
     ) internal {
         // First get the quote
-        (uint256 quotedIn, uint256 quotedOut,) = swapVM.asView().quote(
-            order, tokenIn, tokenOut, amount, takerData
-        );
+        (uint256 quotedIn, uint256 quotedOut, ) = swapVM.asView().quote(order, tokenIn, tokenOut, amount, takerData);
 
         assertGt(quotedIn, 0, "Quote returned zero input");
         assertGt(quotedOut, 0, "Quote returned zero output");
@@ -385,18 +359,15 @@ abstract contract CoreInvariants is Test {
         uint256 prevPrice = type(uint256).max;
 
         for (uint256 i = 0; i < amounts.length; i++) {
-            (, uint256 amountOut,) = swapVM.asView().quote(
-                order, tokenIn, tokenOut, amounts[i], takerData
-            );
+            (, uint256 amountOut, ) = swapVM.asView().quote(order, tokenIn, tokenOut, amounts[i], takerData);
 
             // Calculate price as output/input (with precision)
             uint256 price = (amountOut * 1e18) / amounts[i];
 
             // Price should decrease or stay same (worse for taker)
             // Allow tolerance for dust where rounding > price impact
-            uint256 maxAllowedPrice = prevPrice == type(uint256).max
-                ? type(uint256).max
-                : prevPrice * (BPS + toleranceBps) / BPS;
+            uint256 maxAllowedPrice =
+                prevPrice == type(uint256).max ? type(uint256).max : (prevPrice * (BPS + toleranceBps)) / BPS;
 
             assertLe(
                 price,
@@ -435,34 +406,34 @@ abstract contract CoreInvariants is Test {
         // Get token decimals for proper scaling
         uint8 decimalsIn = IERC20Metadata(tokenIn).decimals();
         uint256 oneTokenIn = 10 ** decimalsIn;
-        uint256 precision = 10 ** 18;  // Use 1e18 for rate calculations
+        uint256 precision = 10 ** 18; // Use 1e18 for rate calculations
 
         // Test with tiny amounts (few wei)
         uint256[] memory amounts = new uint256[](4);
-        amounts[0] = 1;      // 1 wei
-        amounts[1] = 10;     // 10 wei
-        amounts[2] = 100;    // 100 wei
-        amounts[3] = 1000;   // 1000 wei
+        amounts[0] = 1; // 1 wei
+        amounts[1] = 10; // 10 wei
+        amounts[2] = 100; // 100 wei
+        amounts[3] = 1000; // 1000 wei
 
         // Get spot price from a 1-token trade (scaled by token decimals)
-        (, uint256 spotOut,) = swapVM.asView().quote(
-            order, tokenIn, tokenOut, oneTokenIn, exactInTakerData
-        );
+        (, uint256 spotOut, ) = swapVM.asView().quote(order, tokenIn, tokenOut, oneTokenIn, exactInTakerData);
         // spotPrice = (spotOut * precision) / oneTokenIn
         uint256 spotPrice = (spotOut * precision) / oneTokenIn;
 
         for (uint256 i = 0; i < amounts.length; i++) {
             // ExactIn: small amount shouldn't get better than spot price
-            try swapVM.asView().quote(
-                order, tokenIn, tokenOut, amounts[i], exactInTakerData
-            ) returns (uint256, uint256 amountOut, bytes32) {
+            try swapVM.asView().quote(order, tokenIn, tokenOut, amounts[i], exactInTakerData) returns (
+                uint256,
+                uint256 amountOut,
+                bytes32
+            ) {
                 if (amountOut > 0) {
                     // actualRate = (amountOut * precision) / amounts[i]
                     uint256 actualRate = (amountOut * precision) / amounts[i];
 
                     assertLe(
                         actualRate,
-                        spotPrice * (BPS + toleranceBps) / BPS,
+                        (spotPrice * (BPS + toleranceBps)) / BPS,
                         string.concat(
                             "Rounding violation (exactIn): rate for ",
                             vm.toString(amounts[i]),
@@ -480,18 +451,20 @@ abstract contract CoreInvariants is Test {
             }
 
             // ExactOut: small amount should cost at least spot price
-            try swapVM.asView().quote(
-                order, tokenIn, tokenOut, amounts[i], exactOutTakerData
-            ) returns (uint256 amountIn, uint256, bytes32) {
+            try swapVM.asView().quote(order, tokenIn, tokenOut, amounts[i], exactOutTakerData) returns (
+                uint256 amountIn,
+                uint256,
+                bytes32
+            ) {
                 if (amountIn > 0 && amounts[i] > 0) {
                     // inverseRate = (amountIn * precision) / amounts[i]
                     uint256 inverseRate = (amountIn * precision) / amounts[i];
                     // spotInverseRate = precision * precision / spotPrice
-                    uint256 spotInverseRate = precision * precision / spotPrice;
+                    uint256 spotInverseRate = (precision * precision) / spotPrice;
 
                     assertGe(
                         inverseRate,
-                        spotInverseRate * (BPS - toleranceBps) / BPS,
+                        (spotInverseRate * (BPS - toleranceBps)) / BPS,
                         string.concat(
                             "Rounding violation (exactOut): inverse rate for ",
                             vm.toString(amounts[i]),
@@ -523,9 +496,11 @@ abstract contract CoreInvariants is Test {
         // Try to swap a very large amount and verify it handles it gracefully
         uint256 largeAmount = 1000000e18; // 1 million tokens
 
-        try swapVM.asView().quote(
-            order, tokenIn, tokenOut, largeAmount, takerData
-        ) returns (uint256 quotedIn, uint256 quotedOut, bytes32) {
+        try swapVM.asView().quote(order, tokenIn, tokenOut, largeAmount, takerData) returns (
+            uint256 quotedIn,
+            uint256 quotedOut,
+            bytes32
+        ) {
             // If it succeeds, ensure the amounts are reasonable
             assertGt(quotedIn, 0, "Large swap should have non-zero input");
             assertGt(quotedOut, 0, "Large swap should have non-zero output");
@@ -566,20 +541,21 @@ abstract contract CoreInvariants is Test {
 
         uint256[] memory emptyAmounts = new uint256[](0);
 
-        return InvariantConfig({
-            symmetryTolerance: 2,  // 2 wei tolerance
-            additivityTolerance: 0,  // strict by default
-            roundingToleranceBps: 100,  // 1% = 100 bps default
-            monotonicityToleranceBps: 0,  // strict by default
-            testAmounts: amounts,
-            testAmountsExactOut: emptyAmounts,  // Empty = use testAmounts
-            skipAdditivity: false,
-            skipMonotonicity: false,
-            skipSpotPrice: false,
-            skipSymmetry: false,
-            exactInTakerData: "",
-            exactOutTakerData: ""
-        });
+        return
+            InvariantConfig({
+                symmetryTolerance: 2, // 2 wei tolerance
+                additivityTolerance: 0, // strict by default
+                roundingToleranceBps: 100, // 1% = 100 bps default
+                monotonicityToleranceBps: 0, // strict by default
+                testAmounts: amounts,
+                testAmountsExactOut: emptyAmounts, // Empty = use testAmounts
+                skipAdditivity: false,
+                skipMonotonicity: false,
+                skipSpotPrice: false,
+                skipSymmetry: false,
+                exactInTakerData: "",
+                exactOutTakerData: ""
+            });
     }
 
     /**
@@ -591,19 +567,20 @@ abstract contract CoreInvariants is Test {
     ) internal pure returns (InvariantConfig memory) {
         uint256[] memory emptyAmounts = new uint256[](0);
 
-        return InvariantConfig({
-            symmetryTolerance: tolerance,
-            additivityTolerance: 0,  // strict by default
-            roundingToleranceBps: 100,  // 1% = 100 bps default
-            monotonicityToleranceBps: 0,  // strict by default
-            testAmounts: testAmounts,
-            testAmountsExactOut: emptyAmounts,  // Empty = use testAmounts
-            skipAdditivity: false,
-            skipMonotonicity: false,
-            skipSpotPrice: false,
-            skipSymmetry: false,
-            exactInTakerData: "",
-            exactOutTakerData: ""
-        });
+        return
+            InvariantConfig({
+                symmetryTolerance: tolerance,
+                additivityTolerance: 0, // strict by default
+                roundingToleranceBps: 100, // 1% = 100 bps default
+                monotonicityToleranceBps: 0, // strict by default
+                testAmounts: testAmounts,
+                testAmountsExactOut: emptyAmounts, // Empty = use testAmounts
+                skipAdditivity: false,
+                skipMonotonicity: false,
+                skipSpotPrice: false,
+                skipSymmetry: false,
+                exactInTakerData: "",
+                exactOutTakerData: ""
+            });
     }
 }

@@ -47,18 +47,18 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
     uint256 internal availableLiquidity = 1000e18;
 
     // Concentration price bounds (sqrtPriceMin, sqrtPriceMax)
-    uint256 internal sqrtPriceMin = Math.sqrt(0.8e36);   // sqrt(0.8) in 1e18
-    uint256 internal sqrtPriceMax = Math.sqrt(1.25e36);  // sqrt(1.25) in 1e18
+    uint256 internal sqrtPriceMin = Math.sqrt(0.8e36); // sqrt(0.8) in 1e18
+    uint256 internal sqrtPriceMax = Math.sqrt(1.25e36); // sqrt(1.25) in 1e18
 
     // Computed pool balances (derived from availableLiquidity and price bounds)
     uint256 internal balanceA;
     uint256 internal balanceB;
 
     // Flat fee
-    uint32 internal flatFeeInBps = 0.003e9;    // 0.3%
+    uint32 internal flatFeeInBps = 0.003e9; // 0.3%
 
     // Protocol fee
-    uint32 internal protocolFeeOutBps = 0.002e9;   // 0.2%
+    uint32 internal protocolFeeOutBps = 0.002e9; // 0.2%
     address internal feeRecipient = address(0xFEE);
 
     // Test amounts for invariants
@@ -121,15 +121,16 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
      */
     function _computeInitialBalances() internal {
         uint256 sqrtPspot = 1e18; // Market spot price = 1.0
-        (, uint256 actualLt, uint256 actualGt) =
-            XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-                availableLiquidity, availableLiquidity, sqrtPspot, sqrtPriceMin, sqrtPriceMax
-            );
+        (, uint256 actualLt, uint256 actualGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
+            availableLiquidity,
+            availableLiquidity,
+            sqrtPspot,
+            sqrtPriceMin,
+            sqrtPriceMax
+        );
 
         // tokenA is Lt when address(tokenA) < address(tokenB)
-        (balanceA, balanceB) = address(tokenA) < address(tokenB)
-            ? (actualLt, actualGt)
-            : (actualGt, actualLt);
+        (balanceA, balanceB) = address(tokenA) < address(tokenB) ? (actualLt, actualGt) : (actualGt, actualLt);
     }
 
     /**
@@ -148,13 +149,7 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         TokenMock(tokenIn).mint(taker, mintAmount);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         return (actualIn, actualOut);
     }
@@ -174,26 +169,33 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
     ) internal view returns (bytes memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
 
-        return bytes.concat(
-            // Protocol fees BEFORE balances
-            (_protocolFeeOutBps > 0) ? program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(_protocolFeeOutBps, feeRecipient)) : bytes(""),
-
-            // Balances
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([_balanceA, _balanceB])
-                )),
-
-            // Flat fee BEFORE concentrate (concentrate is terminal)
-            (_flatFeeInBps > 0) ? program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(_flatFeeInBps)) : bytes(""),
-
-            // Concentrate instruction (terminal: computes virtual reserves + swap)
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(_sqrtPriceMin, _sqrtPriceMax))
-        );
+        return
+            bytes.concat(
+                // Protocol fees BEFORE balances
+                (_protocolFeeOutBps > 0)
+                    ? program.build(
+                        _protocolFeeAmountOutXD,
+                        FeeArgsBuilder.buildProtocolFee(_protocolFeeOutBps, feeRecipient)
+                    )
+                    : bytes(""),
+                // Balances
+                program.build(
+                    _dynamicBalancesXD,
+                    BalancesArgsBuilder.build(
+                        dynamic([address(tokenA), address(tokenB)]),
+                        dynamic([_balanceA, _balanceB])
+                    )
+                ),
+                // Flat fee BEFORE concentrate (concentrate is terminal)
+                (_flatFeeInBps > 0)
+                    ? program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(_flatFeeInBps))
+                    : bytes(""),
+                // Concentrate instruction (terminal: computes virtual reserves + swap)
+                program.build(
+                    _xycConcentrateGrowLiquidity2D,
+                    XYCConcentrateArgsBuilder.build2D(_sqrtPriceMin, _sqrtPriceMax)
+                )
+            );
     }
 
     function _config(ISwapVM.Order memory order) internal view returns (InvariantConfig memory) {
@@ -217,19 +219,11 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
      * @notice Test concentrate without fees
      */
     function test_ConcentrateXYC() public {
-        bytes memory bytecode = _buildConcentrateProgram(
-            balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0
-        );
+        bytes memory bytecode = _buildConcentrateProgram(balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0);
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -237,18 +231,17 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
      */
     function test_ConcentrateXYCFlatFeeIn() public {
         bytes memory bytecode = _buildConcentrateProgram(
-            balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, flatFeeInBps, 0
+            balanceA,
+            balanceB,
+            sqrtPriceMin,
+            sqrtPriceMax,
+            flatFeeInBps,
+            0
         );
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -260,18 +253,17 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         tokenB.approve(address(swapVM), type(uint256).max);
 
         bytes memory bytecode = _buildConcentrateProgram(
-            balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, protocolFeeOutBps
+            balanceA,
+            balanceB,
+            sqrtPriceMin,
+            sqrtPriceMax,
+            0,
+            protocolFeeOutBps
         );
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -283,42 +275,44 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         tokenB.approve(address(swapVM), type(uint256).max);
 
         bytes memory bytecode = _buildConcentrateProgram(
-            balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, flatFeeInBps, protocolFeeOutBps
+            balanceA,
+            balanceB,
+            sqrtPriceMin,
+            sqrtPriceMax,
+            flatFeeInBps,
+            protocolFeeOutBps
         );
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     // Helper functions
     function _createOrder(bytes memory program) internal view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -332,27 +326,29 @@ contract ConcentrateXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

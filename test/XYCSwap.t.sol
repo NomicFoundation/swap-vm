@@ -73,79 +73,101 @@ contract XYCSwapTest is Test, OpcodesDebug {
     // HELPER FUNCTIONS
     // ========================================
 
-    function _makeOrder(uint256 balanceA, uint256 balanceB, uint256 feeIn) internal view returns (ISwapVM.Order memory) {
+    function _makeOrder(
+        uint256 balanceA,
+        uint256 balanceB,
+        uint256 feeIn
+    ) internal view returns (ISwapVM.Order memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
 
         bytes memory bytecode;
         if (feeIn > 0) {
             bytecode = bytes.concat(
-                program.build(_dynamicBalancesXD, BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
+                program.build(
+                    _dynamicBalancesXD,
+                    BalancesArgsBuilder.build(
+                        dynamic([address(tokenA), address(tokenB)]),
+                        dynamic([balanceA, balanceB])
+                    )
+                ),
                 program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(uint32(feeIn))),
                 program.build(_xycSwapXD)
             );
         } else {
             bytecode = bytes.concat(
-                program.build(_dynamicBalancesXD, BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
+                program.build(
+                    _dynamicBalancesXD,
+                    BalancesArgsBuilder.build(
+                        dynamic([address(tokenA), address(tokenB)]),
+                        dynamic([balanceA, balanceB])
+                    )
+                ),
                 program.build(_xycSwapXD)
             );
         }
 
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: bytecode
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: bytecode
+                })
+            );
     }
 
-    function _signAndPack(ISwapVM.Order memory order, bool isExactIn, uint256 threshold) internal view returns (bytes memory) {
+    function _signAndPack(
+        ISwapVM.Order memory order,
+        bool isExactIn,
+        uint256 threshold
+    ) internal view returns (bytes memory) {
         bytes32 orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        return abi.encodePacked(TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: taker,
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        })));
+        return
+            abi.encodePacked(
+                TakerTraitsLib.build(
+                    TakerTraitsLib.Args({
+                        taker: address(0),
+                        isExactIn: isExactIn,
+                        shouldUnwrapWeth: false,
+                        isStrictThresholdAmount: false,
+                        isFirstTransferFromTaker: false,
+                        useTransferFromAndAquaPush: false,
+                        threshold: thresholdData,
+                        to: taker,
+                        deadline: 0,
+                        hasPreTransferInCallback: false,
+                        hasPreTransferOutCallback: false,
+                        preTransferInHookData: "",
+                        postTransferInHookData: "",
+                        preTransferOutHookData: "",
+                        postTransferOutHookData: "",
+                        preTransferInCallbackData: "",
+                        preTransferOutCallbackData: "",
+                        instructionsArgs: "",
+                        signature: signature
+                    })
+                )
+            );
     }
 
     // ========================================
@@ -163,7 +185,7 @@ contract XYCSwapTest is Test, OpcodesDebug {
         uint256 expectedOut = (amountIn * poolB) / (poolA + amountIn);
 
         vm.prank(taker);
-        (, uint256 amountOut,) = swapVM.swap(order, address(tokenA), address(tokenB), amountIn, takerData);
+        (, uint256 amountOut, ) = swapVM.swap(order, address(tokenA), address(tokenB), amountIn, takerData);
 
         assertEq(amountOut, expectedOut, "Output should match x*y=k formula");
     }
@@ -177,11 +199,11 @@ contract XYCSwapTest is Test, OpcodesDebug {
         bytes memory takerData = _signAndPack(order, true, 0);
 
         uint256 amountIn = 10e18;
-        uint256 amountInAfterFee = amountIn * (1e9 - feeIn) / 1e9;
+        uint256 amountInAfterFee = (amountIn * (1e9 - feeIn)) / 1e9;
         uint256 expectedOut = (amountInAfterFee * poolB) / (poolA + amountInAfterFee);
 
         vm.prank(taker);
-        (, uint256 amountOut,) = swapVM.swap(order, address(tokenA), address(tokenB), amountIn, takerData);
+        (, uint256 amountOut, ) = swapVM.swap(order, address(tokenA), address(tokenB), amountIn, takerData);
 
         assertEq(amountOut, expectedOut, "Output should account for fee");
     }
@@ -195,11 +217,11 @@ contract XYCSwapTest is Test, OpcodesDebug {
 
         // First swap
         vm.prank(taker);
-        (, uint256 amountOut1,) = swapVM.swap(order, address(tokenA), address(tokenB), 10e18, takerData);
+        (, uint256 amountOut1, ) = swapVM.swap(order, address(tokenA), address(tokenB), 10e18, takerData);
 
         // Second swap (state has changed)
         vm.prank(taker);
-        (, uint256 amountOut2,) = swapVM.swap(order, address(tokenA), address(tokenB), 10e18, takerData);
+        (, uint256 amountOut2, ) = swapVM.swap(order, address(tokenA), address(tokenB), 10e18, takerData);
 
         assertLt(amountOut2, amountOut1, "Second swap should get worse rate");
     }
@@ -274,7 +296,6 @@ contract XYCSwapTest is Test, OpcodesDebug {
         bytes memory takerData
     ) internal returns (uint256 amountOut) {
         vm.prank(taker);
-        (, amountOut,) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
+        (, amountOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
     }
 }
-

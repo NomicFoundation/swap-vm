@@ -6,7 +6,6 @@ pragma solidity 0.8.30;
 
 import { XYCFeesInvariants } from "../XYCFeesInvariants.t.sol";
 
-
 /**
  * @title SmallAmounts
  * @notice Tests XYC + fees with very small swap amounts relative to pool
@@ -21,18 +20,18 @@ contract SmallAmounts is XYCFeesInvariants {
         balanceB = 1000e18;
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        flatFeeOutBps = 0.003e9;       // 0.3%
-        progressiveFeeInBps = 0.05e9;  // 5%
+        flatFeeInBps = 0.003e9; // 0.3%
+        flatFeeOutBps = 0.003e9; // 0.3%
+        progressiveFeeInBps = 0.05e9; // 5%
         progressiveFeeOutBps = 0.05e9; // 5%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Very small amounts relative to pool (< 0.1%)
         testAmounts = new uint256[](4);
-        testAmounts[0] = 1e12;     // 0.000001 tokens
-        testAmounts[1] = 1e14;     // 0.0001 tokens
-        testAmounts[2] = 1e15;     // 0.001 tokens
-        testAmounts[3] = 1e16;     // 0.01 tokens
+        testAmounts[0] = 1e12; // 0.000001 tokens
+        testAmounts[1] = 1e14; // 0.0001 tokens
+        testAmounts[2] = 1e15; // 0.001 tokens
+        testAmounts[3] = 1e16; // 0.01 tokens
 
         // Allow 1-wei rounding in additivity for small amounts
         additivityTolerance = 1;

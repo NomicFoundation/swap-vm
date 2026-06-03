@@ -15,35 +15,30 @@ contract ProtocolFeeAquaTest is AquaSwapVMTest {
         super.setUp();
     }
 
-    function _makerSetup(
-        uint32 feeInBps,
-        uint32 protocolFeeBps
-    ) internal view returns (MakerSetup memory) {
-        return MakerSetup({
-            balanceA: INITIAL_BALANCE_A,
-            balanceB: INITIAL_BALANCE_B,
-            priceMin: 0,
-            priceMax: 0,
-            protocolFeeBps: protocolFeeBps,
-            feeInBps: feeInBps,
-            protocolFeeRecipient: protocolFeeRecipient,
-            swapType: SwapType.XYC
-        });
+    function _makerSetup(uint32 feeInBps, uint32 protocolFeeBps) internal view returns (MakerSetup memory) {
+        return
+            MakerSetup({
+                balanceA: INITIAL_BALANCE_A,
+                balanceB: INITIAL_BALANCE_B,
+                priceMin: 0,
+                priceMax: 0,
+                protocolFeeBps: protocolFeeBps,
+                feeInBps: feeInBps,
+                protocolFeeRecipient: protocolFeeRecipient,
+                swapType: SwapType.XYC
+            });
     }
 
-    function _swapProgram(
-        uint256 amount,
-        bool zeroForOne,
-        bool isExactIn
-    ) internal view returns (SwapProgram memory) {
-        return SwapProgram({
-            amount: amount,
-            taker: taker,
-            tokenA: tokenA,
-            tokenB: tokenB,
-            zeroForOne: zeroForOne,
-            isExactIn: isExactIn
-        });
+    function _swapProgram(uint256 amount, bool zeroForOne, bool isExactIn) internal view returns (SwapProgram memory) {
+        return
+            SwapProgram({
+                amount: amount,
+                taker: taker,
+                tokenA: tokenA,
+                tokenB: tokenB,
+                zeroForOne: zeroForOne,
+                isExactIn: isExactIn
+            });
     }
 
     function test_Aqua_ProtocolFee_ExactIn_ReceivedByRecipient() public {
@@ -58,24 +53,42 @@ contract ProtocolFeeAquaTest is AquaSwapVMTest {
         mintTokenInToMaker(swapProgram, 200e18);
         mintTokenOutToMaker(swapProgram, 200e18);
         (uint256 takerBalanceABefore, uint256 takerBalanceBBefore) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceABefore, uint256 protocolRecipientBalanceBBefore) = getProtocolRecipientBalances();
+        (
+            uint256 protocolRecipientBalanceABefore,
+            uint256 protocolRecipientBalanceBBefore
+        ) = getProtocolRecipientBalances();
 
         (uint256 amountIn, uint256 amountOut) = swap(swapProgram, order);
 
         (uint256 makerBalanceAAfter, uint256 makerBalanceBAfter) = getAquaBalances(strategyHash);
         (uint256 takerBalanceAAfter, uint256 takerBalanceBAfter) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceAAfter, uint256 protocolRecipientBalanceBAfter) = getProtocolRecipientBalances();
+        (
+            uint256 protocolRecipientBalanceAAfter,
+            uint256 protocolRecipientBalanceBAfter
+        ) = getProtocolRecipientBalances();
 
-        uint256 expectedProtocolFee = amountIn * setup.protocolFeeBps / BPS;
+        uint256 expectedProtocolFee = (amountIn * setup.protocolFeeBps) / BPS;
         uint256 effectiveAmountIn = amountIn - expectedProtocolFee;
-        uint256 amountOutExpected = setup.balanceB * effectiveAmountIn / (setup.balanceA + effectiveAmountIn);
+        uint256 amountOutExpected = (setup.balanceB * effectiveAmountIn) / (setup.balanceA + effectiveAmountIn);
         assertEq(takerBalanceBAfter - takerBalanceBBefore, amountOutExpected, "Taker received correct amountOut");
-        assertEq(makerBalanceAAfter, makerBalanceABefore + amountIn - expectedProtocolFee, "Maker balance A should increase by amountIn minus protocol fee");
+        assertEq(
+            makerBalanceAAfter,
+            makerBalanceABefore + amountIn - expectedProtocolFee,
+            "Maker balance A should increase by amountIn minus protocol fee"
+        );
         assertEq(makerBalanceBAfter, makerBalanceBBefore - amountOut, "Maker balance B should decrease by amountOut");
         assertEq(takerBalanceAAfter, takerBalanceABefore - amountIn, "Taker balance A should decrease by amountIn");
         assertEq(takerBalanceBAfter, takerBalanceBBefore + amountOut, "Taker balance B should increase by amountOut");
-        assertEq(protocolRecipientBalanceAAfter - protocolRecipientBalanceABefore, expectedProtocolFee, "Protocol recipient received protocol fee in tokenIn");
-        assertEq(protocolRecipientBalanceBAfter - protocolRecipientBalanceBBefore, 0, "Protocol recipient balance B should not change");
+        assertEq(
+            protocolRecipientBalanceAAfter - protocolRecipientBalanceABefore,
+            expectedProtocolFee,
+            "Protocol recipient received protocol fee in tokenIn"
+        );
+        assertEq(
+            protocolRecipientBalanceBAfter - protocolRecipientBalanceBBefore,
+            0,
+            "Protocol recipient balance B should not change"
+        );
     }
 
     function test_Aqua_ProtocolFee_ExactOut_ReceivedByRecipient() public {
@@ -90,24 +103,42 @@ contract ProtocolFeeAquaTest is AquaSwapVMTest {
         mintTokenInToMaker(swapProgram, 200e18);
         mintTokenOutToMaker(swapProgram, 200e18);
         (uint256 takerBalanceABefore, uint256 takerBalanceBBefore) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceABefore, uint256 protocolRecipientBalanceBBefore) = getProtocolRecipientBalances();
+        (
+            uint256 protocolRecipientBalanceABefore,
+            uint256 protocolRecipientBalanceBBefore
+        ) = getProtocolRecipientBalances();
 
         (uint256 amountIn, uint256 amountOut) = swap(swapProgram, order);
 
         (uint256 makerBalanceAAfter, uint256 makerBalanceBAfter) = getAquaBalances(strategyHash);
         (uint256 takerBalanceAAfter, uint256 takerBalanceBAfter) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceAAfter, uint256 protocolRecipientBalanceBAfter) = getProtocolRecipientBalances();
+        (
+            uint256 protocolRecipientBalanceAAfter,
+            uint256 protocolRecipientBalanceBAfter
+        ) = getProtocolRecipientBalances();
 
-        uint256 amountInBase = setup.balanceA * amountOut / (setup.balanceB - amountOut);
-        uint256 expectedProtocolFee = amountInBase * setup.protocolFeeBps / (BPS - setup.protocolFeeBps);
+        uint256 amountInBase = (setup.balanceA * amountOut) / (setup.balanceB - amountOut);
+        uint256 expectedProtocolFee = (amountInBase * setup.protocolFeeBps) / (BPS - setup.protocolFeeBps);
         uint256 amountInExpected = amountInBase + expectedProtocolFee;
         assertApproxEqAbs(takerBalanceABefore - takerBalanceAAfter, amountInExpected, 1, "Taker paid correct amountIn");
-        assertEq(makerBalanceAAfter, makerBalanceABefore + amountIn - expectedProtocolFee, "Maker balance A should increase by amountIn minus protocol fee");
+        assertEq(
+            makerBalanceAAfter,
+            makerBalanceABefore + amountIn - expectedProtocolFee,
+            "Maker balance A should increase by amountIn minus protocol fee"
+        );
         assertEq(makerBalanceBAfter, makerBalanceBBefore - amountOut, "Maker balance B should decrease by amountOut");
         assertEq(takerBalanceAAfter, takerBalanceABefore - amountIn, "Taker balance A should decrease by amountIn");
         assertEq(takerBalanceBAfter, takerBalanceBBefore + amountOut, "Taker balance B should increase by amountOut");
-        assertEq(protocolRecipientBalanceAAfter - protocolRecipientBalanceABefore, expectedProtocolFee, "Protocol recipient received protocol fee in tokenIn");
-        assertEq(protocolRecipientBalanceBAfter - protocolRecipientBalanceBBefore, 0, "Protocol recipient balance B should not change");
+        assertEq(
+            protocolRecipientBalanceAAfter - protocolRecipientBalanceABefore,
+            expectedProtocolFee,
+            "Protocol recipient received protocol fee in tokenIn"
+        );
+        assertEq(
+            protocolRecipientBalanceBAfter - protocolRecipientBalanceBBefore,
+            0,
+            "Protocol recipient balance B should not change"
+        );
     }
 
     function test_Aqua_ProtocolFee_ExactIn_WithFlatFeeIn() public {
@@ -122,26 +153,44 @@ contract ProtocolFeeAquaTest is AquaSwapVMTest {
         mintTokenInToMaker(swapProgram, 200e18);
         mintTokenOutToMaker(swapProgram, 200e18);
         (uint256 takerBalanceABefore, uint256 takerBalanceBBefore) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceABefore, uint256 protocolRecipientBalanceBBefore) = getProtocolRecipientBalances();
+        (
+            uint256 protocolRecipientBalanceABefore,
+            uint256 protocolRecipientBalanceBBefore
+        ) = getProtocolRecipientBalances();
 
         (uint256 amountIn, uint256 amountOut) = swap(swapProgram, order);
 
         (uint256 makerBalanceAAfter, uint256 makerBalanceBAfter) = getAquaBalances(strategyHash);
         (uint256 takerBalanceAAfter, uint256 takerBalanceBAfter) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceAAfter, uint256 protocolRecipientBalanceBAfter) = getProtocolRecipientBalances();
+        (
+            uint256 protocolRecipientBalanceAAfter,
+            uint256 protocolRecipientBalanceBAfter
+        ) = getProtocolRecipientBalances();
 
-        uint256 protocolFee = amountIn * setup.protocolFeeBps / BPS;
+        uint256 protocolFee = (amountIn * setup.protocolFeeBps) / BPS;
         uint256 afterProtocolFee = amountIn - protocolFee;
-        uint256 feeIn = afterProtocolFee * setup.feeInBps / BPS;
+        uint256 feeIn = (afterProtocolFee * setup.feeInBps) / BPS;
         uint256 effectiveAmountIn = afterProtocolFee - feeIn;
-        uint256 amountOutExpected = setup.balanceB * effectiveAmountIn / (setup.balanceA + effectiveAmountIn);
+        uint256 amountOutExpected = (setup.balanceB * effectiveAmountIn) / (setup.balanceA + effectiveAmountIn);
         assertEq(takerBalanceBAfter - takerBalanceBBefore, amountOutExpected, "Taker received correct amountOut");
-        assertEq(makerBalanceAAfter, makerBalanceABefore + amountIn - protocolFee, "Maker balance A should increase by amountIn minus protocol fee");
+        assertEq(
+            makerBalanceAAfter,
+            makerBalanceABefore + amountIn - protocolFee,
+            "Maker balance A should increase by amountIn minus protocol fee"
+        );
         assertEq(makerBalanceBAfter, makerBalanceBBefore - amountOut, "Maker balance B should decrease by amountOut");
         assertEq(takerBalanceAAfter, takerBalanceABefore - amountIn, "Taker balance A should decrease by amountIn");
         assertEq(takerBalanceBAfter, takerBalanceBBefore + amountOut, "Taker balance B should increase by amountOut");
-        assertEq(protocolRecipientBalanceAAfter - protocolRecipientBalanceABefore, protocolFee, "Protocol recipient received protocol fee in tokenIn");
-        assertEq(protocolRecipientBalanceBAfter - protocolRecipientBalanceBBefore, 0, "Protocol recipient balance B should not change");
+        assertEq(
+            protocolRecipientBalanceAAfter - protocolRecipientBalanceABefore,
+            protocolFee,
+            "Protocol recipient received protocol fee in tokenIn"
+        );
+        assertEq(
+            protocolRecipientBalanceBAfter - protocolRecipientBalanceBBefore,
+            0,
+            "Protocol recipient balance B should not change"
+        );
     }
 
     function test_Aqua_ProtocolFee_ExactOut_WithFlatFeeIn() public {
@@ -156,16 +205,20 @@ contract ProtocolFeeAquaTest is AquaSwapVMTest {
         mintTokenInToMaker(swapProgram, 200e18);
         mintTokenOutToMaker(swapProgram, 200e18);
         (uint256 takerBalanceABefore, uint256 takerBalanceBBefore) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceABefore,) = getProtocolRecipientBalances();
+        (uint256 protocolRecipientBalanceABefore, ) = getProtocolRecipientBalances();
 
         (uint256 amountIn, uint256 amountOut) = swap(swapProgram, order);
 
         (uint256 makerBalanceAAfter, uint256 makerBalanceBAfter) = getAquaBalances(strategyHash);
         (uint256 takerBalanceAAfter, uint256 takerBalanceBAfter) = getTakerBalances(swapProgram.taker);
-        (uint256 protocolRecipientBalanceAAfter,) = getProtocolRecipientBalances();
+        (uint256 protocolRecipientBalanceAAfter, ) = getProtocolRecipientBalances();
 
         uint256 protocolFee = protocolRecipientBalanceAAfter - protocolRecipientBalanceABefore;
-        assertEq(makerBalanceAAfter, makerBalanceABefore + amountIn - protocolFee, "Maker balance A should increase by amountIn minus protocol fee");
+        assertEq(
+            makerBalanceAAfter,
+            makerBalanceABefore + amountIn - protocolFee,
+            "Maker balance A should increase by amountIn minus protocol fee"
+        );
         assertEq(makerBalanceBAfter, makerBalanceBBefore - amountOut, "Maker balance B should decrease by amountOut");
         assertEq(takerBalanceAAfter, takerBalanceABefore - amountIn, "Taker balance A should decrease by amountIn");
         assertEq(takerBalanceBAfter, takerBalanceBBefore + amountOut, "Taker balance B should increase by amountOut");
@@ -187,6 +240,11 @@ contract ProtocolFeeAquaTest is AquaSwapVMTest {
         (uint256 amountIn2, uint256 amountOut2) = quote(swapProgramOut, order);
 
         assertApproxEqAbs(amountIn, amountIn2, 2, "AmountIn should be consistent between exactIn and exactOut swaps");
-        assertApproxEqAbs(amountOut, amountOut2, 2, "AmountOut should be consistent between exactIn and exactOut swaps");
+        assertApproxEqAbs(
+            amountOut,
+            amountOut2,
+            2,
+            "AmountOut should be consistent between exactIn and exactOut swaps"
+        );
     }
 }
