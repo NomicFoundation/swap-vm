@@ -226,11 +226,11 @@ gas-snapshot :; npx hardhat test solidity --snapshot
 
 gas-snapshot-check :; npx hardhat test solidity --snapshot-check
 
-format :; forge fmt
+format :; npx prettier --write "{src,test,script,mocks}/**/*.sol"
 
 clean :; npx hardhat clean
 
-lint :; forge fmt --check
+lint :; npx prettier --check "{src,test,script,mocks}/**/*.sol"
 
 node :; npx hardhat node --fork $(NODE_URL) --chain-id $(OPS_CHAIN_ID) --hostname 127.0.0.1 --port 8546
 
