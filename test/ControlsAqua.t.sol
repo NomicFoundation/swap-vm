@@ -9,8 +9,6 @@ import { TokenMock } from "@1inch/solidity-utils/contracts/mocks/TokenMock.sol";
 
 import { SwapVM, ISwapVM } from "../src/SwapVM.sol";
 
-
-
 import { MakerTraitsLib } from "../src/libs/MakerTraits.sol";
 import { TakerTraitsLib } from "../src/libs/TakerTraits.sol";
 import { Controls, ControlsArgsBuilder } from "../src/instructions/Controls.sol";
@@ -20,7 +18,6 @@ import { Program, ProgramBuilder } from "./utils/ProgramBuilder.sol";
 import { dynamic } from "./utils/Dynamic.sol";
 import { AquaSwapVMTest } from "./base/AquaSwapVMTest.sol";
 import { MockNFT } from "./mocks/MockNft.sol";
-
 
 contract ControlsAquaTest is AquaSwapVMTest {
     using ProgramBuilder for Program;
@@ -74,7 +71,7 @@ contract ControlsAquaTest is AquaSwapVMTest {
             taker: taker,
             tokenA: tokenA,
             tokenB: tokenB,
-            zeroForOne: false,  // swap B for A
+            zeroForOne: false, // swap B for A
             isExactIn: true
         });
 
@@ -85,19 +82,13 @@ contract ControlsAquaTest is AquaSwapVMTest {
         // Verify first swap succeeded
         assertEq(amountIn1, 50e18, "First swap: incorrect amountIn");
         // For XYC swap with 100:100 ratio, output should be calculated based on XYC formula
-        uint256 expectedOut1 = uint256(50e18) * uint256(100e18) / (uint256(100e18) + uint256(50e18)); // ~33.33e18
+        uint256 expectedOut1 = (uint256(50e18) * uint256(100e18)) / (uint256(100e18) + uint256(50e18)); // ~33.33e18
         assertEq(amountOut1, expectedOut1, "First swap: incorrect amountOut");
 
         // Try to execute after deadline (should revert)
         vm.warp(block.timestamp + 101); // Move time forward to exceed deadline
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Controls.DeadlineReached.selector,
-                address(taker),
-                deadline
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Controls.DeadlineReached.selector, address(taker), deadline));
         swap(swapProgram, order);
 
         // Verify final balances
@@ -123,20 +114,14 @@ contract ControlsAquaTest is AquaSwapVMTest {
             taker: taker,
             tokenA: tokenA,
             tokenB: tokenB,
-            zeroForOne: false,  // swap B for A
+            zeroForOne: false, // swap B for A
             isExactIn: true
         });
 
         mintTokenInToTaker(swapProgram);
 
         // Should revert immediately because deadline has already passed
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Controls.DeadlineReached.selector,
-                address(taker),
-                deadline
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Controls.DeadlineReached.selector, address(taker), deadline));
         swap(swapProgram, order);
     }
 
@@ -144,7 +129,10 @@ contract ControlsAquaTest is AquaSwapVMTest {
         // Build program with NFT gate check and XYC swap
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(Controls._onlyTakerTokenBalanceNonZero, ControlsArgsBuilder.buildTakerTokenBalanceNonZero(address(nftGate))),
+            program.build(
+                Controls._onlyTakerTokenBalanceNonZero,
+                ControlsArgsBuilder.buildTakerTokenBalanceNonZero(address(nftGate))
+            ),
             program.build(XYCSwap._xycSwapXD),
             program.build(Controls._salt, abi.encodePacked(vm.randomUint())) // ensure unique order hash
         );
@@ -170,7 +158,7 @@ contract ControlsAquaTest is AquaSwapVMTest {
             taker: taker,
             tokenA: tokenA,
             tokenB: tokenB,
-            zeroForOne: false,  // swap B for A
+            zeroForOne: false, // swap B for A
             isExactIn: true
         });
 
@@ -181,7 +169,7 @@ contract ControlsAquaTest is AquaSwapVMTest {
 
         // Verify swap succeeded
         assertEq(amountIn, 50e18, "Incorrect amountIn");
-        uint256 expectedOut = uint256(50e18) * uint256(100e18) / (uint256(100e18) + uint256(50e18)); // ~33.33e18
+        uint256 expectedOut = (uint256(50e18) * uint256(100e18)) / (uint256(100e18) + uint256(50e18)); // ~33.33e18
         assertEq(amountOut, expectedOut, "Incorrect amountOut");
 
         // Verify token balances
@@ -209,7 +197,7 @@ contract ControlsAquaTest is AquaSwapVMTest {
             taker: taker,
             tokenA: tokenA,
             tokenB: tokenB,
-            zeroForOne: false,  // swap B for A
+            zeroForOne: false, // swap B for A
             isExactIn: true
         });
 
@@ -217,11 +205,7 @@ contract ControlsAquaTest is AquaSwapVMTest {
 
         // Execute swap - should fail because taker doesn't have the NFT
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Controls.TakerTokenBalanceIsZero.selector,
-                address(taker),
-                address(nftGate)
-            )
+            abi.encodeWithSelector(Controls.TakerTokenBalanceIsZero.selector, address(taker), address(nftGate))
         );
         swap(swapProgram, order);
 

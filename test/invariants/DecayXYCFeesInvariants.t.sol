@@ -24,7 +24,6 @@ import { dynamic } from "../utils/Dynamic.sol";
 
 import { CoreInvariants } from "./CoreInvariants.t.sol";
 
-
 /**
  * @title DecayXYCFeesInvariants
  * @notice Tests invariants for Decay AMM + XYCSwap + all types of fees
@@ -82,16 +81,9 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         TokenMock(tokenIn).mint(taker, amount * 10);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         // Verify the swap consumed the expected input amount
-
 
         return (actualIn, actualOut);
     }
@@ -107,15 +99,12 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
             program.build(_xycSwapXD)
         );
 
@@ -133,13 +122,7 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -153,15 +136,12 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps)),
             program.build(_xycSwapXD)
         );
 
@@ -180,13 +160,7 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // TODO: State-dependent due to decay
         config.skipAdditivity = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -200,15 +174,12 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_progressiveFeeInXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_progressiveFeeInXD, FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
             program.build(_xycSwapXD)
         );
 
@@ -220,13 +191,7 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // TODO: Progressive fees violate additivity by design
         config.skipAdditivity = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -240,15 +205,12 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_progressiveFeeOutXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_progressiveFeeOutXD, FeeArgsBuilderExperimental.buildProgressiveFee(feeBps)),
             program.build(_xycSwapXD)
         );
 
@@ -274,13 +236,7 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // TODO: Progressive fees violate additivity by design
         config.skipAdditivity = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -294,15 +250,12 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_protocolFeeAmountInXD,
-                FeeArgsBuilder.buildProtocolFee(feeBps, feeRecipient)),
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
+            program.build(_protocolFeeAmountInXD, FeeArgsBuilder.buildProtocolFee(feeBps, feeRecipient)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
             program.build(_xycSwapXD)
         );
 
@@ -322,13 +275,7 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // Protocol fee on amountIn + decay affects additivity
         config.additivityTolerance = 1;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -346,15 +293,12 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(feeBps, feeRecipient)),
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
+            program.build(_protocolFeeAmountOutXD, FeeArgsBuilder.buildProtocolFee(feeBps, feeRecipient)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
             program.build(_xycSwapXD)
         );
 
@@ -374,13 +318,7 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // Decay violates additivity by design - state changes between swaps
         config.skipAdditivity = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -390,22 +328,18 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         uint256 balanceA = 3000e18;
         uint256 balanceB = 3000e18;
         uint16 decayPeriod = 600;
-        uint32 flatFeeBps = 0.001e9;      // 0.1% flat fee
+        uint32 flatFeeBps = 0.001e9; // 0.1% flat fee
         uint32 progressiveFeeBps = 0.02e9; // 2% progressive fee
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balanceA, balanceB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(flatFeeBps)),
-            program.build(_progressiveFeeOutXD,
-                FeeArgsBuilderExperimental.buildProgressiveFee(progressiveFeeBps)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balanceA, balanceB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(flatFeeBps)),
+            program.build(_progressiveFeeOutXD, FeeArgsBuilderExperimental.buildProgressiveFee(progressiveFeeBps)),
             program.build(_xycSwapXD)
         );
 
@@ -420,37 +354,34 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // TODO: due to progressive fees
         config.skipAdditivity = true;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -464,27 +395,29 @@ contract DecayXYCFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

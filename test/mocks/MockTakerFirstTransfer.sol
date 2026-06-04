@@ -23,17 +23,8 @@ contract MockTakerFirstTransfer is MockTaker {
         bytes32 orderHash,
         bytes calldata takerData
     ) public override onlySwapVM {
-        super.preTransferInCallback(
-            maker,
-            taker,
-            tokenIn,
-            tokenOut,
-            amountIn,
-            amountOut,
-            orderHash,
-            takerData
-        );
+        super.preTransferInCallback(maker, taker, tokenIn, tokenOut, amountIn, amountOut, orderHash, takerData);
         ERC20(tokenOut).transfer(maker, amountOut); // transfer tokenOut to maker for checking that
-                                                    // preTransferInCallback is called before maker transfer
+        // preTransferInCallback is called before maker transfer
     }
 }

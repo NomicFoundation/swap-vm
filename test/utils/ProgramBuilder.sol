@@ -17,20 +17,32 @@ library ProgramBuilder {
 
     error OpcodeNotFound();
 
-    function init(function(Context memory, bytes calldata) internal[] memory opcodes) internal pure returns (Program memory) {
+    function init(
+        function(Context memory, bytes calldata) internal[] memory opcodes
+    ) internal pure returns (Program memory) {
         return Program({ opcodes: opcodes });
     }
 
-    function build(Program memory self, function(Context memory, bytes calldata) internal instruction) internal pure returns (bytes memory) {
+    function build(
+        Program memory self,
+        function(Context memory, bytes calldata) internal instruction
+    ) internal pure returns (bytes memory) {
         return build(self, instruction, "");
     }
 
-    function build(Program memory self, function(Context memory, bytes calldata) internal instruction, bytes memory args) internal pure returns (bytes memory) {
+    function build(
+        Program memory self,
+        function(Context memory, bytes calldata) internal instruction,
+        bytes memory args
+    ) internal pure returns (bytes memory) {
         uint8 opcode = findOpcode(self, instruction);
         return abi.encodePacked(opcode, args.length.toUint8(), args);
     }
 
-    function findOpcode(Program memory self, function(Context memory, bytes calldata) internal targetOpcode) internal pure returns (uint8) {
+    function findOpcode(
+        Program memory self,
+        function(Context memory, bytes calldata) internal targetOpcode
+    ) internal pure returns (uint8) {
         for (uint256 i = 0; i < self.opcodes.length; i++) {
             // Direct function pointer comparison in Solidity
             if (self.opcodes[i] == targetOpcode) {

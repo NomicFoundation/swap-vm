@@ -35,16 +35,13 @@ contract Invalidators {
     error InvalidatorTokenOutExceeded(uint256 prefilled, uint256 amountOut, uint256 balanceOut);
     error InvalidateTokenOutExpectsAmountOutToBeComputed();
 
-    mapping(address maker =>
-        mapping(uint256 slotIndex => uint256 bitmap)) public bitInvalidators;
+    mapping(address maker => mapping(uint256 slotIndex => uint256 bitmap)) public bitInvalidators;
 
-    mapping(address maker =>
-        mapping(bytes32 orderHash =>
-            mapping(address token => uint256 filled))) public tokenInInvalidators;
+    mapping(address maker => mapping(bytes32 orderHash => mapping(address token => uint256 filled)))
+        public tokenInInvalidators;
 
-    mapping(address maker =>
-        mapping(bytes32 orderHash =>
-            mapping(address token => uint256 filled))) public tokenOutInvalidators;
+    mapping(address maker => mapping(bytes32 orderHash => mapping(address token => uint256 filled)))
+        public tokenOutInvalidators;
 
     function invalidateBit(uint256 bitIndex) external {
         bitInvalidators[msg.sender][bitIndex >> 8] |= (1 << (bitIndex & 0xFF));
@@ -90,7 +87,10 @@ contract Invalidators {
         require(ctx.swap.amountIn > 0, InvalidateTokenInExpectsAmountInToBeComputed());
         uint256 prefilled = tokenInInvalidators[ctx.query.maker][ctx.query.orderHash][ctx.query.tokenIn];
         uint256 newFilled = prefilled + ctx.swap.amountIn;
-        require(newFilled <= ctx.swap.balanceIn, InvalidatorsTokenInExceeded(prefilled, ctx.swap.amountIn, ctx.swap.balanceIn));
+        require(
+            newFilled <= ctx.swap.balanceIn,
+            InvalidatorsTokenInExceeded(prefilled, ctx.swap.amountIn, ctx.swap.balanceIn)
+        );
         if (!ctx.vm.isStaticContext) {
             tokenInInvalidators[ctx.query.maker][ctx.query.orderHash][ctx.query.tokenIn] = newFilled;
         }
@@ -111,7 +111,10 @@ contract Invalidators {
         require(ctx.swap.amountOut > 0, InvalidateTokenOutExpectsAmountOutToBeComputed());
         uint256 prefilled = tokenOutInvalidators[ctx.query.maker][ctx.query.orderHash][ctx.query.tokenOut];
         uint256 newFilled = prefilled + ctx.swap.amountOut;
-        require(newFilled <= ctx.swap.balanceOut, InvalidatorTokenOutExceeded(prefilled, ctx.swap.amountOut, ctx.swap.balanceOut));
+        require(
+            newFilled <= ctx.swap.balanceOut,
+            InvalidatorTokenOutExceeded(prefilled, ctx.swap.amountOut, ctx.swap.balanceOut)
+        );
         if (!ctx.vm.isStaticContext) {
             tokenOutInvalidators[ctx.query.maker][ctx.query.orderHash][ctx.query.tokenOut] = newFilled;
         }

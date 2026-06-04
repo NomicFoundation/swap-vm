@@ -85,25 +85,25 @@ contract MakerHooksTest is Test, OpcodesDebug {
         vm.prank(taker);
         tokenB.approve(address(swapVM), type(uint256).max);
 
-        cfg = TakerConfig({
-            isFirstTransferFromTaker: false,
-            threshold: "",
-            hookData: HookData("", "", "", "")
-        });
+        cfg = TakerConfig({ isFirstTransferFromTaker: false, threshold: "", hookData: HookData("", "", "", "") });
     }
 
     // ==================== Helper Functions ====================
 
     function _buildProgram(uint64 salt) internal view returns (bytes memory) {
         Program memory p = ProgramBuilder.init(_opcodes());
-        return bytes.concat(
-            p.build(Balances._staticBalancesXD,
-                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([uint256(100e18), uint256(200e18)]))),
-            p.build(LimitSwap._limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
-            p.build(Controls._salt,
-                ControlsArgsBuilder.buildSalt(salt))
-        );
+        return
+            bytes.concat(
+                p.build(
+                    Balances._staticBalancesXD,
+                    BalancesArgsBuilder.build(
+                        dynamic([address(tokenA), address(tokenB)]),
+                        dynamic([uint256(100e18), uint256(200e18)])
+                    )
+                ),
+                p.build(LimitSwap._limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA))),
+                p.build(Controls._salt, ControlsArgsBuilder.buildSalt(salt))
+            );
     }
 
     function _createOrder(
@@ -111,57 +111,75 @@ contract MakerHooksTest is Test, OpcodesDebug {
         HookData memory hookData,
         uint64 salt
     ) internal view returns (ISwapVM.Order memory order, bytes32 orderHash, bytes memory signature) {
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: hookTargets.preIn != address(0),
-            hasPostTransferInHook: hookTargets.postIn != address(0),
-            hasPreTransferOutHook: hookTargets.preOut != address(0),
-            hasPostTransferOutHook: hookTargets.postOut != address(0),
-            preTransferInTarget: hookTargets.preIn,
-            preTransferInData: hookData.preIn,
-            postTransferInTarget: hookTargets.postIn,
-            postTransferInData: hookData.postIn,
-            preTransferOutTarget: hookTargets.preOut,
-            preTransferOutData: hookData.preOut,
-            postTransferOutTarget: hookTargets.postOut,
-            postTransferOutData: hookData.postOut,
-            program: _buildProgram(salt)
-        }));
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: hookTargets.preIn != address(0),
+                hasPostTransferInHook: hookTargets.postIn != address(0),
+                hasPreTransferOutHook: hookTargets.preOut != address(0),
+                hasPostTransferOutHook: hookTargets.postOut != address(0),
+                preTransferInTarget: hookTargets.preIn,
+                preTransferInData: hookData.preIn,
+                postTransferInTarget: hookTargets.postIn,
+                postTransferInData: hookData.postIn,
+                preTransferOutTarget: hookTargets.preOut,
+                preTransferOutData: hookData.preOut,
+                postTransferOutTarget: hookTargets.postOut,
+                postTransferOutData: hookData.postOut,
+                program: _buildProgram(salt)
+            })
+        );
         orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
         signature = abi.encodePacked(r, s, v);
     }
 
     function _buildTakerData(TakerConfig memory _cfg, bytes memory signature) internal view returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: taker,
-            isExactIn: true,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: _cfg.isFirstTransferFromTaker,
-            useTransferFromAndAquaPush: false,
-            threshold: _cfg.threshold,
-            to: address(0),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: _cfg.hookData.preIn,
-            postTransferInHookData: _cfg.hookData.postIn,
-            preTransferOutHookData: _cfg.hookData.preOut,
-            postTransferOutHookData: _cfg.hookData.postOut,
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: taker,
+                    isExactIn: true,
+                    shouldUnwrapWeth: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: _cfg.isFirstTransferFromTaker,
+                    useTransferFromAndAquaPush: false,
+                    threshold: _cfg.threshold,
+                    to: address(0),
+                    deadline: 0,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    preTransferInHookData: _cfg.hookData.preIn,
+                    postTransferInHookData: _cfg.hookData.postIn,
+                    preTransferOutHookData: _cfg.hookData.preOut,
+                    postTransferOutHookData: _cfg.hookData.postOut,
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: signature
+                })
+            );
     }
 
     function _verifyHookData(
-        function() external view returns (address, address, address, address, uint256, uint256, bytes32, bytes memory, bytes memory) hookGetter,
+        function()
+            external
+            view
+            returns (
+                address,
+                address,
+                address,
+                address,
+                uint256,
+                uint256,
+                bytes32,
+                bytes memory,
+                bytes memory
+            ) hookGetter,
         bytes32 expectedOrderHash,
         uint256 expectedAmountIn,
         uint256 expectedAmountOut,
@@ -215,12 +233,17 @@ contract MakerHooksTest is Test, OpcodesDebug {
             0x9876
         );
 
-
         cfg.hookData = takerHookData;
         bytes memory takerData = _buildTakerData(cfg, signature);
 
         vm.prank(taker);
-        (uint256 amountIn, uint256 amountOut,) = swapVM.swap(order, address(tokenB), address(tokenA), 50e18, takerData);
+        (uint256 amountIn, uint256 amountOut, ) = swapVM.swap(
+            order,
+            address(tokenB),
+            address(tokenA),
+            50e18,
+            takerData
+        );
 
         // Verify all hooks were called
         assertTrue(hooksContract.allHooksCalled(), "Not all hooks were called");
@@ -230,20 +253,48 @@ contract MakerHooksTest is Test, OpcodesDebug {
         assertEq(hooksContract.postTransferOutCallCount(), 1);
 
         // Verify PreTransferIn data
-        _verifyHookData(hooksContract.lastPreTransferIn, orderHash, amountIn, amountOut,
-            makerData.preIn, takerHookData.preIn, "PreTransferIn");
+        _verifyHookData(
+            hooksContract.lastPreTransferIn,
+            orderHash,
+            amountIn,
+            amountOut,
+            makerData.preIn,
+            takerHookData.preIn,
+            "PreTransferIn"
+        );
 
         // Verify PostTransferIn data
-        _verifyHookData(hooksContract.lastPostTransferIn, orderHash, amountIn, amountOut,
-            makerData.postIn, takerHookData.postIn, "PostTransferIn");
+        _verifyHookData(
+            hooksContract.lastPostTransferIn,
+            orderHash,
+            amountIn,
+            amountOut,
+            makerData.postIn,
+            takerHookData.postIn,
+            "PostTransferIn"
+        );
 
         // Verify PreTransferOut data
-        _verifyHookData(hooksContract.lastPreTransferOut, orderHash, amountIn, amountOut,
-            makerData.preOut, takerHookData.preOut, "PreTransferOut");
+        _verifyHookData(
+            hooksContract.lastPreTransferOut,
+            orderHash,
+            amountIn,
+            amountOut,
+            makerData.preOut,
+            takerHookData.preOut,
+            "PreTransferOut"
+        );
 
         // Verify PostTransferOut data
-        _verifyHookData(hooksContract.lastPostTransferOut, orderHash, amountIn, amountOut,
-            makerData.postOut, takerHookData.postOut, "PostTransferOut");
+        _verifyHookData(
+            hooksContract.lastPostTransferOut,
+            orderHash,
+            amountIn,
+            amountOut,
+            makerData.postOut,
+            takerHookData.postOut,
+            "PostTransferOut"
+        );
 
         // Verify swap results
         assertEq(amountIn, 50e18);
@@ -253,12 +304,7 @@ contract MakerHooksTest is Test, OpcodesDebug {
     }
 
     function test_HooksWithEmptyTakerData() public {
-        HookData memory makerData = HookData(
-            abi.encodePacked("MAKER_DATA"),
-            abi.encodePacked("MAKER_DATA_2"),
-            "",
-            ""
-        );
+        HookData memory makerData = HookData(abi.encodePacked("MAKER_DATA"), abi.encodePacked("MAKER_DATA_2"), "", "");
 
         (ISwapVM.Order memory order, , bytes memory signature) = _createOrder(
             HookTargets(address(hooksContract), address(hooksContract), address(0), address(0)),
@@ -278,11 +324,11 @@ contract MakerHooksTest is Test, OpcodesDebug {
         assertEq(hooksContract.preTransferOutCallCount(), 0);
         assertEq(hooksContract.postTransferOutCallCount(), 0);
 
-        (,,,,,,, bytes memory lastMakerData, bytes memory lastTakerData) = hooksContract.lastPreTransferIn();
+        (, , , , , , , bytes memory lastMakerData, bytes memory lastTakerData) = hooksContract.lastPreTransferIn();
         assertEq(lastMakerData, makerData.preIn);
         assertEq(lastTakerData.length, 0);
 
-        (,,,,,,, lastMakerData, lastTakerData) = hooksContract.lastPostTransferIn();
+        (, , , , , , , lastMakerData, lastTakerData) = hooksContract.lastPostTransferIn();
         assertEq(lastMakerData, makerData.postIn);
         assertEq(lastTakerData.length, 0);
     }
@@ -334,13 +380,25 @@ contract MakerHooksTest is Test, OpcodesDebug {
 
         for (uint256 i = 0; i < logs.length; i++) {
             bytes32 topic = logs[i].topics[0];
-            if (topic == keccak256("PreTransferInCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")) {
+            if (
+                topic ==
+                keccak256("PreTransferInCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")
+            ) {
                 preInIndex = i;
-            } else if (topic == keccak256("PostTransferInCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")) {
+            } else if (
+                topic ==
+                keccak256("PostTransferInCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")
+            ) {
                 postInIndex = i;
-            } else if (topic == keccak256("PreTransferOutCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")) {
+            } else if (
+                topic ==
+                keccak256("PreTransferOutCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")
+            ) {
                 preOutIndex = i;
-            } else if (topic == keccak256("PostTransferOutCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")) {
+            } else if (
+                topic ==
+                keccak256("PostTransferOutCalled(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)")
+            ) {
                 postOutIndex = i;
             }
         }
@@ -359,11 +417,17 @@ contract MakerHooksTest is Test, OpcodesDebug {
     }
 
     function test_PreTransferOutHook_Reverts_SwapReverts() public {
-        _testRevertingHook(RevertingMakerHooks.HookType.PreTransferOut, RevertingMakerHooks.PreTransferOutReverted.selector);
+        _testRevertingHook(
+            RevertingMakerHooks.HookType.PreTransferOut,
+            RevertingMakerHooks.PreTransferOutReverted.selector
+        );
     }
 
     function test_PostTransferInHook_Reverts_SwapReverts() public {
-        _testRevertingHook(RevertingMakerHooks.HookType.PostTransferIn, RevertingMakerHooks.PostTransferInReverted.selector);
+        _testRevertingHook(
+            RevertingMakerHooks.HookType.PostTransferIn,
+            RevertingMakerHooks.PostTransferInReverted.selector
+        );
     }
 
     function _testRevertingHook(RevertingMakerHooks.HookType hookType, bytes4 expectedError) internal {
@@ -383,11 +447,10 @@ contract MakerHooksTest is Test, OpcodesDebug {
 
         (ISwapVM.Order memory order, , bytes memory signature) = _createOrder(targets, makerData, 0xAAAA);
 
-        bytes memory takerData = _buildTakerData(TakerConfig({
-            isFirstTransferFromTaker: true,
-            threshold: "",
-            hookData: HookData("", "", "", "")
-        }), signature);
+        bytes memory takerData = _buildTakerData(
+            TakerConfig({ isFirstTransferFromTaker: true, threshold: "", hookData: HookData("", "", "", "") }),
+            signature
+        );
 
         vm.prank(taker);
         vm.expectRevert(expectedError);
@@ -400,9 +463,18 @@ contract MakerHooksTest is Test, OpcodesDebug {
 
         HookTargets memory targets = HookTargets(address(hooks1), address(0), address(hooks2), address(0));
         HookData memory makerData = HookData(abi.encodePacked("PRE_IN_DATA"), "", abi.encodePacked("PRE_OUT_DATA"), "");
-        HookData memory takerHookData = HookData(abi.encodePacked("TAKER_PRE_IN"), "", abi.encodePacked("TAKER_PRE_OUT"), "");
+        HookData memory takerHookData = HookData(
+            abi.encodePacked("TAKER_PRE_IN"),
+            "",
+            abi.encodePacked("TAKER_PRE_OUT"),
+            ""
+        );
 
-        (ISwapVM.Order memory order, bytes32 orderHash, bytes memory signature) = _createOrder(targets, makerData, 0xCCCC);
+        (ISwapVM.Order memory order, bytes32 orderHash, bytes memory signature) = _createOrder(
+            targets,
+            makerData,
+            0xCCCC
+        );
 
         cfg.hookData = takerHookData;
         {
@@ -419,8 +491,17 @@ contract MakerHooksTest is Test, OpcodesDebug {
         assertEq(hooks2.preTransferOutCallCount(), 1);
         assertEq(hooks2.preTransferInCallCount(), 0);
 
-        (address lastMaker, address lastTaker, address lastTokenIn, address lastTokenOut,,,
-            bytes32 lastOrderHash, bytes memory lastMakerData, bytes memory lastTakerData) = hooks2.lastPreTransferOut();
+        (
+            address lastMaker,
+            address lastTaker,
+            address lastTokenIn,
+            address lastTokenOut,
+            ,
+            ,
+            bytes32 lastOrderHash,
+            bytes memory lastMakerData,
+            bytes memory lastTakerData
+        ) = hooks2.lastPreTransferOut();
 
         assertEq(lastMaker, maker);
         assertEq(lastTaker, taker);
@@ -437,9 +518,18 @@ contract MakerHooksTest is Test, OpcodesDebug {
 
         HookTargets memory targets = HookTargets(address(hooks1), address(hooks2), address(0), address(0));
         HookData memory makerData = HookData(abi.encodePacked("PRE_IN_DATA"), abi.encodePacked("POST_IN_DATA"), "", "");
-        HookData memory takerHookData = HookData(abi.encodePacked("TAKER_PRE_IN"), abi.encodePacked("TAKER_POST_IN"), "", "");
+        HookData memory takerHookData = HookData(
+            abi.encodePacked("TAKER_PRE_IN"),
+            abi.encodePacked("TAKER_POST_IN"),
+            "",
+            ""
+        );
 
-        (ISwapVM.Order memory order, bytes32 orderHash, bytes memory signature) = _createOrder(targets, makerData, 0xF002);
+        (ISwapVM.Order memory order, bytes32 orderHash, bytes memory signature) = _createOrder(
+            targets,
+            makerData,
+            0xF002
+        );
 
         cfg.hookData = takerHookData;
         {
@@ -456,8 +546,17 @@ contract MakerHooksTest is Test, OpcodesDebug {
         assertEq(hooks2.postTransferInCallCount(), 1);
         assertEq(hooks2.preTransferInCallCount(), 0);
 
-        (address lastMaker, address lastTaker, address lastTokenIn, address lastTokenOut,,,
-            bytes32 lastOrderHash, bytes memory lastMakerData, bytes memory lastTakerData) = hooks2.lastPostTransferIn();
+        (
+            address lastMaker,
+            address lastTaker,
+            address lastTokenIn,
+            address lastTokenOut,
+            ,
+            ,
+            bytes32 lastOrderHash,
+            bytes memory lastMakerData,
+            bytes memory lastTakerData
+        ) = hooks2.lastPostTransferIn();
 
         assertEq(lastMaker, maker);
         assertEq(lastTaker, taker);
@@ -485,16 +584,19 @@ contract MakerHooksTest is Test, OpcodesDebug {
         }
 
         // Empty maker data
-        (ISwapVM.Order memory order, , bytes memory signature) = _createOrder(targets, HookData("", "", "", ""), testPostIn ? 0xF003 : 0xDDDD);
+        (ISwapVM.Order memory order, , bytes memory signature) = _createOrder(
+            targets,
+            HookData("", "", "", ""),
+            testPostIn ? 0xF003 : 0xDDDD
+        );
 
         // Non-empty taker data
-        bytes memory takerProvidedData = testPostIn
-            ? abi.encodePacked("TAKER_PROVIDED_DATA_FOR_POST_IN")
-            : abi.encodePacked("TAKER_PROVIDED_DATA_FOR_PRE_OUT");
+        bytes memory takerProvidedData =
+            testPostIn
+                ? abi.encodePacked("TAKER_PROVIDED_DATA_FOR_POST_IN")
+                : abi.encodePacked("TAKER_PROVIDED_DATA_FOR_PRE_OUT");
 
-        cfg.hookData = testPostIn
-                ? HookData("", takerProvidedData, "", "")
-                : HookData("", "", takerProvidedData, "");
+        cfg.hookData = testPostIn ? HookData("", takerProvidedData, "", "") : HookData("", "", takerProvidedData, "");
 
         hooksContract.resetCounters();
         {
@@ -508,10 +610,10 @@ contract MakerHooksTest is Test, OpcodesDebug {
 
         if (testPostIn) {
             assertEq(hooksContract.postTransferInCallCount(), 1);
-            (,,,,,,, lastMakerData, lastTakerData) = hooksContract.lastPostTransferIn();
+            (, , , , , , , lastMakerData, lastTakerData) = hooksContract.lastPostTransferIn();
         } else {
             assertEq(hooksContract.preTransferOutCallCount(), 1);
-            (,,,,,,, lastMakerData, lastTakerData) = hooksContract.lastPreTransferOut();
+            (, , , , , , , lastMakerData, lastTakerData) = hooksContract.lastPreTransferOut();
         }
 
         assertEq(lastMakerData.length, 0);
@@ -530,9 +632,10 @@ contract MakerHooksTest is Test, OpcodesDebug {
         tokenA.mint(maker, 1000e18);
         tokenB.mint(taker, 1000e18);
 
-        uint64[3] memory salts = testPostIn
-            ? [uint64(0xF004), uint64(0xF005), uint64(0xF006)]
-            : [uint64(0xEEE1), uint64(0xEEE2), uint64(0xEEE3)];
+        uint64[3] memory salts =
+            testPostIn
+                ? [uint64(0xF004), uint64(0xF005), uint64(0xF006)]
+                : [uint64(0xEEE1), uint64(0xEEE2), uint64(0xEEE3)];
 
         string[3] memory orderLabels = ["ORDER_1", "ORDER_2", "ORDER_3"];
         string[3] memory swapLabels = ["SWAP_1", "SWAP_2", "SWAP_3"];
@@ -567,10 +670,10 @@ contract MakerHooksTest is Test, OpcodesDebug {
 
             if (testPostIn) {
                 assertEq(hooksContract.postTransferInCallCount(), expectedCount);
-                (,,,,,,, lastMakerData,) = hooksContract.lastPostTransferIn();
+                (, , , , , , , lastMakerData, ) = hooksContract.lastPostTransferIn();
             } else {
                 assertEq(hooksContract.preTransferOutCallCount(), expectedCount);
-                (,,,,,,, lastMakerData,) = hooksContract.lastPreTransferOut();
+                (, , , , , , , lastMakerData, ) = hooksContract.lastPreTransferOut();
             }
 
             assertEq(lastMakerData, abi.encodePacked(orderLabels[i]));

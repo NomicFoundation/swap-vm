@@ -80,39 +80,44 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
     ) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
         Program memory program = ProgramBuilder.init(_opcodes());
 
-        bytes memory feeInstruction = feeBps > 0
-            ? program.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps))
-            : bytes("");
+        bytes memory feeInstruction =
+            feeBps > 0 ? program.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)) : bytes("");
 
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: bytes.concat(
-                program.build(Balances._dynamicBalancesXD, BalancesArgsBuilder.build(
-                    dynamic([address(tokenUSD), address(tokenETH)]),
-                    dynamic([balanceUSD, balanceETH])
-                )),
-                feeInstruction,
-                program.build(XYCConcentrate._xycConcentrateGrowLiquidity2D,
-                    XYCConcentrateArgsBuilder.build2D(sqrtPriceMin, sqrtPriceMax)
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: bytes.concat(
+                    program.build(
+                        Balances._dynamicBalancesXD,
+                        BalancesArgsBuilder.build(
+                            dynamic([address(tokenUSD), address(tokenETH)]),
+                            dynamic([balanceUSD, balanceETH])
+                        )
+                    ),
+                    feeInstruction,
+                    program.build(
+                        XYCConcentrate._xycConcentrateGrowLiquidity2D,
+                        XYCConcentrateArgsBuilder.build2D(sqrtPriceMin, sqrtPriceMax)
+                    )
                 )
-            )
-        }));
+            })
+        );
 
         bytes32 orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
@@ -120,27 +125,30 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
     }
 
     function _takerData(bool isExactIn, bytes memory sig) internal view returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: taker,
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: sig
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: taker,
+                    isExactIn: isExactIn,
+                    shouldUnwrapWeth: false,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: sig
+                })
+            );
     }
 
     /// @notice Test effective price at Pmin = 2000 with 3% fee
@@ -157,13 +165,21 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
         uint256 initialETH = 1000e18;
 
         (, uint256 bLt, uint256 bGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-            initialETH, initialUSD, Math.sqrt(targetSpotPrice * 1e18), sqrtPriceMin, sqrtPriceMax
+            initialETH,
+            initialUSD,
+            Math.sqrt(targetSpotPrice * 1e18),
+            sqrtPriceMin,
+            sqrtPriceMax
         );
         uint256 balanceUSD = address(tokenUSD) > address(tokenETH) ? bGt : bLt;
         uint256 balanceETH = address(tokenUSD) > address(tokenETH) ? bLt : bGt;
 
         (ISwapVM.Order memory order, bytes memory sig) = _createOrder(
-            balanceUSD, balanceETH, sqrtPriceMin, sqrtPriceMax, FEE_3PCT
+            balanceUSD,
+            balanceETH,
+            sqrtPriceMin,
+            sqrtPriceMax,
+            FEE_3PCT
         );
 
         // Test 1: Sell ETH for USD (ExactIn: sell exactly 1 ETH)
@@ -171,7 +187,7 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
         // Expected effective: 2000 * 0.97 = 1940 USD/ETH (get less USD due to fee)
         uint256 ethToSell = 1e18;
         vm.prank(taker);
-        (, uint256 usdReceived,) = swapVM.swap(order, tokenETH, tokenUSD, ethToSell, _takerData(true, sig));
+        (, uint256 usdReceived, ) = swapVM.swap(order, tokenETH, tokenUSD, ethToSell, _takerData(true, sig));
 
         uint256 effectivePriceSell = (usdReceived * 1e18) / ethToSell;
         uint256 expectedPriceSell = (Pmin * 97) / 100; // 1940e18
@@ -182,7 +198,7 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
         // Expected effective: 2000 / 0.97 = 2061.86 USD/ETH (pay more USD due to fee)
         uint256 ethToBuy = 1e18;
         vm.prank(taker);
-        (uint256 usdPaid,,) = swapVM.swap(order, tokenUSD, tokenETH, ethToBuy, _takerData(false, sig));
+        (uint256 usdPaid, , ) = swapVM.swap(order, tokenUSD, tokenETH, ethToBuy, _takerData(false, sig));
 
         uint256 effectivePriceBuy = (usdPaid * 1e18) / ethToBuy;
         uint256 expectedPriceBuy = (Pmin * 100) / 97; // ~2061.86e18
@@ -203,13 +219,21 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
         uint256 initialETH = 1000e18;
 
         (, uint256 bLt, uint256 bGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-            initialETH, initialUSD, Math.sqrt(targetSpotPrice * 1e18), sqrtPriceMin, sqrtPriceMax
+            initialETH,
+            initialUSD,
+            Math.sqrt(targetSpotPrice * 1e18),
+            sqrtPriceMin,
+            sqrtPriceMax
         );
         uint256 balanceUSD = address(tokenUSD) > address(tokenETH) ? bGt : bLt;
         uint256 balanceETH = address(tokenUSD) > address(tokenETH) ? bLt : bGt;
 
         (ISwapVM.Order memory order, bytes memory sig) = _createOrder(
-            balanceUSD, balanceETH, sqrtPriceMin, sqrtPriceMax, FEE_3PCT
+            balanceUSD,
+            balanceETH,
+            sqrtPriceMin,
+            sqrtPriceMax,
+            FEE_3PCT
         );
 
         // Test 1: Sell ETH for USD (ExactIn: sell exactly 1 ETH)
@@ -217,7 +241,7 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
         // Expected effective: 4000 * 0.97 = 3880 USD/ETH (get less USD due to fee)
         uint256 ethToSell = 1e18;
         vm.prank(taker);
-        (, uint256 usdReceived,) = swapVM.swap(order, tokenETH, tokenUSD, ethToSell, _takerData(true, sig));
+        (, uint256 usdReceived, ) = swapVM.swap(order, tokenETH, tokenUSD, ethToSell, _takerData(true, sig));
 
         uint256 effectivePriceSell = (usdReceived * 1e18) / ethToSell;
         uint256 expectedPriceSell = (Pmax * 97) / 100; // 3880e18
@@ -228,7 +252,7 @@ contract XYCConcentrateFeeEffectivePriceBoundsTest is Test, OpcodesDebug {
         // Expected effective: 4000 / 0.97 = 4123.71 USD/ETH (pay more USD due to fee)
         uint256 ethToBuy = 1e18;
         vm.prank(taker);
-        (uint256 usdPaid,,) = swapVM.swap(order, tokenUSD, tokenETH, ethToBuy, _takerData(false, sig));
+        (uint256 usdPaid, , ) = swapVM.swap(order, tokenUSD, tokenETH, ethToBuy, _takerData(false, sig));
 
         uint256 effectivePriceBuy = (usdPaid * 1e18) / ethToBuy;
         uint256 expectedPriceBuy = (Pmax * 100) / 97; // ~4123.71e18

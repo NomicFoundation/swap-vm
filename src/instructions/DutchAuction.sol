@@ -23,24 +23,12 @@ library DutchAuctionArgsBuilder {
     /// @param duration Auction duration (seconds) - auction expires at startTime + duration
     /// @param decayFactor Price decay per second (< 1e18), e.g., 0.99e18 = 1% decay/sec
     /// @return Packed bytes for inclusion in program bytecode (15 bytes total)
-    function build(
-        uint40 startTime,
-        uint16 duration,
-        uint64 decayFactor
-    ) internal pure returns (bytes memory) {
+    function build(uint40 startTime, uint16 duration, uint64 decayFactor) internal pure returns (bytes memory) {
         require(decayFactor < 1e18, DutchAuctionDecayFactorShouldBeLessThanOneE18(decayFactor));
-        return abi.encodePacked(
-            startTime,
-            duration,
-            decayFactor
-        );
+        return abi.encodePacked(startTime, duration, decayFactor);
     }
 
-    function parse(bytes calldata args) internal pure returns (
-        uint40 startTime,
-        uint16 duration,
-        uint64 decayFactor
-    ) {
+    function parse(bytes calldata args) internal pure returns (uint40 startTime, uint16 duration, uint64 decayFactor) {
         startTime = uint40(bytes5(args.slice(0, 5, DutchAuctionMissingStartTime.selector)));
         duration = uint16(bytes2(args.slice(5, 7, DutchAuctionMissingDuration.selector)));
         decayFactor = uint64(bytes8(args.slice(7, 15, DutchAuctionMissingDecayFactor.selector)));
@@ -80,23 +68,29 @@ contract DutchAuction {
 
     /// @notice Apply Dutch auction decay to shrink the amount in by shrinking the balance in
     function _dutchAuctionBalanceIn1D(Context memory ctx, bytes calldata args) internal view {
-        require(ctx.swap.amountIn == 0 || ctx.swap.amountOut == 0, DutchAuctionShouldBeAppliedBeforeSwapAmountsComputed(ctx.swap.amountIn, ctx.swap.amountOut));
+        require(
+            ctx.swap.amountIn == 0 || ctx.swap.amountOut == 0,
+            DutchAuctionShouldBeAppliedBeforeSwapAmountsComputed(ctx.swap.amountIn, ctx.swap.amountOut)
+        );
 
         (uint256 startTime, uint256 duration, uint256 decayFactor) = DutchAuctionArgsBuilder.parse(args);
         require(block.timestamp <= startTime + duration, DutchAuctionExpired(block.timestamp, startTime + duration));
         uint256 elapsed = block.timestamp - startTime;
         uint256 decay = decayFactor.pow(elapsed, 1e18);
-        ctx.swap.balanceIn = ctx.swap.balanceIn * decay / 1e18;
+        ctx.swap.balanceIn = (ctx.swap.balanceIn * decay) / 1e18;
     }
 
     /// @notice Apply Dutch auction decay to increase the amount out by increasing the balance out
     function _dutchAuctionBalanceOut1D(Context memory ctx, bytes calldata args) internal view {
-        require(ctx.swap.amountIn == 0 || ctx.swap.amountOut == 0, DutchAuctionShouldBeAppliedBeforeSwapAmountsComputed(ctx.swap.amountIn, ctx.swap.amountOut));
+        require(
+            ctx.swap.amountIn == 0 || ctx.swap.amountOut == 0,
+            DutchAuctionShouldBeAppliedBeforeSwapAmountsComputed(ctx.swap.amountIn, ctx.swap.amountOut)
+        );
 
         (uint256 startTime, uint256 duration, uint256 decayFactor) = DutchAuctionArgsBuilder.parse(args);
         require(block.timestamp <= startTime + duration, DutchAuctionExpired(block.timestamp, startTime + duration));
         uint256 elapsed = block.timestamp - startTime;
         uint256 decay = decayFactor.pow(elapsed, 1e18);
-        ctx.swap.balanceOut = ctx.swap.balanceOut * 1e18 / decay;
+        ctx.swap.balanceOut = (ctx.swap.balanceOut * 1e18) / decay;
     }
 }

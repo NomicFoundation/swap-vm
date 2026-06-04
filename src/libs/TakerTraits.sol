@@ -59,7 +59,6 @@ library TakerTraitsLib {
         bytes threshold;
         address to;
         uint40 deadline;
-
         bool hasPreTransferInCallback;
         bool hasPreTransferOutCallback;
         bytes preTransferInHookData;
@@ -86,24 +85,27 @@ library TakerTraitsLib {
         Signature
     }
 
-    uint256 constant internal TAKER_DATA_SLICES_INDEXES_BIT_OFFSET = 16;
-    uint256 constant internal TAKER_DATA_SLICES_INDEX_BIT_MAP = type(uint16).max;
-    uint256 constant internal TAKER_DATA_SLICES_INDEX_BIT_SIZE_SHL = 4;
+    uint256 internal constant TAKER_DATA_SLICES_INDEXES_BIT_OFFSET = 16;
+    uint256 internal constant TAKER_DATA_SLICES_INDEX_BIT_MAP = type(uint16).max;
+    uint256 internal constant TAKER_DATA_SLICES_INDEX_BIT_SIZE_SHL = 4;
 
-    uint16 constant internal IS_EXACT_IN_BIT_FLAG = 0x0001;
-    uint16 constant internal SHOULD_UNWRAP_BIT_FLAG = 0x0002;
-    uint16 constant internal HAS_PRE_TRANSFER_IN_CALLBACK_BIT_FLAG = 0x0004;
-    uint16 constant internal HAS_PRE_TRANSFER_OUT_CALLBACK_BIT_FLAG = 0x0008;
-    uint16 constant internal IS_STRICT_THRESHOLD_BIT_FLAG = 0x0010;
-    uint16 constant internal IS_FIRST_TRANSFER_FROM_TAKER_BIT_FLAG = 0x0020;
-    uint16 constant internal USE_TRANSFER_FROM_AND_AQUA_PUSH_FLAG = 0x0040;
+    uint16 internal constant IS_EXACT_IN_BIT_FLAG = 0x0001;
+    uint16 internal constant SHOULD_UNWRAP_BIT_FLAG = 0x0002;
+    uint16 internal constant HAS_PRE_TRANSFER_IN_CALLBACK_BIT_FLAG = 0x0004;
+    uint16 internal constant HAS_PRE_TRANSFER_OUT_CALLBACK_BIT_FLAG = 0x0008;
+    uint16 internal constant IS_STRICT_THRESHOLD_BIT_FLAG = 0x0010;
+    uint16 internal constant IS_FIRST_TRANSFER_FROM_TAKER_BIT_FLAG = 0x0020;
+    uint16 internal constant USE_TRANSFER_FROM_AND_AQUA_PUSH_FLAG = 0x0040;
 
     /// @notice Build taker traits and data from arguments
     /// @dev Packs traits, hooks, callbacks, and signature into single bytes
     /// @param args Taker configuration arguments
     /// @return packed Complete taker traits and data ready for swap execution
     function build(Args memory args) internal pure returns (bytes memory packed) {
-        require(args.threshold.length == 32 || args.threshold.length == 0, TakerTraitsThresholdLengthInvalid(args.threshold));
+        require(
+            args.threshold.length == 32 || args.threshold.length == 0,
+            TakerTraitsThresholdLengthInvalid(args.threshold)
+        );
 
         if (args.preTransferInCallbackData.length > 0) {
             require(args.hasPreTransferInCallback, TakerTraitsMissingHasPreTransferInFlag());
@@ -125,26 +127,26 @@ library TakerTraitsLib {
 
         uint160 slicesIndexes = uint160(
             (uint160(index0) << 0) |
-            (uint160(index1) << 16) |
-            (uint160(index2) << 32) |
-            (uint160(index3) << 48) |
-            (uint160(index4) << 64) |
-            (uint160(index5) << 80) |
-            (uint160(index6) << 96) |
-            (uint160(index7) << 112) |
-            (uint160(index8) << 128) |
-            (uint160(index9) << 144)
+                (uint160(index1) << 16) |
+                (uint160(index2) << 32) |
+                (uint160(index3) << 48) |
+                (uint160(index4) << 64) |
+                (uint160(index5) << 80) |
+                (uint160(index6) << 96) |
+                (uint160(index7) << 112) |
+                (uint160(index8) << 128) |
+                (uint160(index9) << 144)
         );
 
         packed = abi.encodePacked(
             slicesIndexes,
             (args.isExactIn ? IS_EXACT_IN_BIT_FLAG : 0) |
-            (args.shouldUnwrapWeth ? SHOULD_UNWRAP_BIT_FLAG : 0) |
-            (args.isStrictThresholdAmount ? IS_STRICT_THRESHOLD_BIT_FLAG : 0) |
-            (args.isFirstTransferFromTaker ? IS_FIRST_TRANSFER_FROM_TAKER_BIT_FLAG : 0) |
-            (args.useTransferFromAndAquaPush ? USE_TRANSFER_FROM_AND_AQUA_PUSH_FLAG : 0) |
-            (args.hasPreTransferInCallback ? HAS_PRE_TRANSFER_IN_CALLBACK_BIT_FLAG : 0) |
-            (args.hasPreTransferOutCallback ? HAS_PRE_TRANSFER_OUT_CALLBACK_BIT_FLAG : 0),
+                (args.shouldUnwrapWeth ? SHOULD_UNWRAP_BIT_FLAG : 0) |
+                (args.isStrictThresholdAmount ? IS_STRICT_THRESHOLD_BIT_FLAG : 0) |
+                (args.isFirstTransferFromTaker ? IS_FIRST_TRANSFER_FROM_TAKER_BIT_FLAG : 0) |
+                (args.useTransferFromAndAquaPush ? USE_TRANSFER_FROM_AND_AQUA_PUSH_FLAG : 0) |
+                (args.hasPreTransferInCallback ? HAS_PRE_TRANSFER_IN_CALLBACK_BIT_FLAG : 0) |
+                (args.hasPreTransferOutCallback ? HAS_PRE_TRANSFER_OUT_CALLBACK_BIT_FLAG : 0),
             args.threshold,
             (args.to != address(0) && args.to != args.taker ? abi.encodePacked(args.to) : bytes("")),
             (args.deadline != 0 ? abi.encodePacked(args.deadline) : bytes("")),
@@ -169,7 +171,13 @@ library TakerTraitsLib {
         tail = data.slice(22);
     }
 
-    function validate(TakerTraits traits, bytes calldata takerData, uint256 takerAmount, uint256 amountIn, uint256 amountOut) internal view {
+    function validate(
+        TakerTraits traits,
+        bytes calldata takerData,
+        uint256 takerAmount,
+        uint256 amountIn,
+        uint256 amountOut
+    ) internal view {
         require(amountOut > 0, TakerTraitsAmountOutMustBeGreaterThanZero(amountOut));
 
         uint40 takerDeadline = traits.deadline(takerData);
@@ -180,9 +188,15 @@ library TakerTraitsLib {
             (bool hasThreshold, uint256 thresholdAmount) = traits.threshold(takerData);
             if (hasThreshold) {
                 if (traits.isStrictThresholdAmount()) {
-                    require(amountOut == thresholdAmount, TakerTraitsNonExactThresholdAmountOut(amountOut, thresholdAmount));
+                    require(
+                        amountOut == thresholdAmount,
+                        TakerTraitsNonExactThresholdAmountOut(amountOut, thresholdAmount)
+                    );
                 } else {
-                    require(amountOut >= thresholdAmount, TakerTraitsInsufficientMinOutputAmount(amountOut, thresholdAmount));
+                    require(
+                        amountOut >= thresholdAmount,
+                        TakerTraitsInsufficientMinOutputAmount(amountOut, thresholdAmount)
+                    );
                 }
             }
         } else {
@@ -190,7 +204,10 @@ library TakerTraitsLib {
             (bool hasThreshold, uint256 thresholdAmount) = traits.threshold(takerData);
             if (hasThreshold) {
                 if (traits.isStrictThresholdAmount()) {
-                    require(amountIn == thresholdAmount, TakerTraitsNonExactThresholdAmountIn(amountIn, thresholdAmount));
+                    require(
+                        amountIn == thresholdAmount,
+                        TakerTraitsNonExactThresholdAmountIn(amountIn, thresholdAmount)
+                    );
                 } else {
                     require(amountIn <= thresholdAmount, TakerTraitsExceedingMaxInputAmount(amountIn, thresholdAmount));
                 }
@@ -226,7 +243,10 @@ library TakerTraitsLib {
         return (TakerTraits.unwrap(traits) & IS_FIRST_TRANSFER_FROM_TAKER_BIT_FLAG) != 0;
     }
 
-    function threshold(TakerTraits traits, bytes calldata data) internal pure returns (bool hasThreshold, uint256 thresholdAmount) {
+    function threshold(
+        TakerTraits traits,
+        bytes calldata data
+    ) internal pure returns (bool hasThreshold, uint256 thresholdAmount) {
         bytes calldata thresholdData = _getDataSlice(traits, data, TakerDataSlices.Threshold);
         return (thresholdData.length == 32, uint256(bytes32(thresholdData)));
     }
@@ -241,27 +261,45 @@ library TakerTraitsLib {
         return deadlineData.length == 5 ? uint40(bytes5(deadlineData)) : 0;
     }
 
-    function preTransferInHookData(TakerTraits traits, bytes calldata data) internal pure returns (bytes calldata hookData) {
+    function preTransferInHookData(
+        TakerTraits traits,
+        bytes calldata data
+    ) internal pure returns (bytes calldata hookData) {
         return _getDataSlice(traits, data, TakerDataSlices.PreTransferInHook);
     }
 
-    function postTransferInHookData(TakerTraits traits, bytes calldata data) internal pure returns (bytes calldata hookData) {
+    function postTransferInHookData(
+        TakerTraits traits,
+        bytes calldata data
+    ) internal pure returns (bytes calldata hookData) {
         return _getDataSlice(traits, data, TakerDataSlices.PostTransferInHook);
     }
 
-    function preTransferOutHookData(TakerTraits traits, bytes calldata data) internal pure returns (bytes calldata hookData) {
+    function preTransferOutHookData(
+        TakerTraits traits,
+        bytes calldata data
+    ) internal pure returns (bytes calldata hookData) {
         return _getDataSlice(traits, data, TakerDataSlices.PreTransferOutHook);
     }
 
-    function postTransferOutHookData(TakerTraits traits, bytes calldata data) internal pure returns (bytes calldata hookData) {
+    function postTransferOutHookData(
+        TakerTraits traits,
+        bytes calldata data
+    ) internal pure returns (bytes calldata hookData) {
         return _getDataSlice(traits, data, TakerDataSlices.PostTransferOutHook);
     }
 
-    function preTransferInCallbackData(TakerTraits traits, bytes calldata data) internal pure returns (bytes calldata hookData) {
+    function preTransferInCallbackData(
+        TakerTraits traits,
+        bytes calldata data
+    ) internal pure returns (bytes calldata hookData) {
         return _getDataSlice(traits, data, TakerDataSlices.PreTransferInCallback);
     }
 
-    function preTransferOutCallbackData(TakerTraits traits, bytes calldata data) internal pure returns (bytes calldata hookData) {
+    function preTransferOutCallbackData(
+        TakerTraits traits,
+        bytes calldata data
+    ) internal pure returns (bytes calldata hookData) {
         return _getDataSlice(traits, data, TakerDataSlices.PreTransferOutCallback);
     }
 
@@ -273,12 +311,17 @@ library TakerTraitsLib {
         return _getDataSlice(traits, data, TakerDataSlices.Signature);
     }
 
-    function _getDataSlice(TakerTraits traits, bytes calldata data, TakerDataSlices slice) private pure returns (bytes calldata) {
-        return data.slice(
-            _getStartOffset(traits, slice),
-            _getStopOffset(traits, slice, data.length),
-            TakerTraitsMissingHookData.selector
-        );
+    function _getDataSlice(
+        TakerTraits traits,
+        bytes calldata data,
+        TakerDataSlices slice
+    ) private pure returns (bytes calldata) {
+        return
+            data.slice(
+                _getStartOffset(traits, slice),
+                _getStopOffset(traits, slice, data.length),
+                TakerTraitsMissingHookData.selector
+            );
     }
 
     function _getStartOffset(TakerTraits traits, TakerDataSlices slice) private pure returns (uint256) {
@@ -287,12 +330,18 @@ library TakerTraitsLib {
         }
     }
 
-    function _getStopOffset(TakerTraits traits, TakerDataSlices slice, uint256 dataLength) private pure returns (uint256) {
+    function _getStopOffset(
+        TakerTraits traits,
+        TakerDataSlices slice,
+        uint256 dataLength
+    ) private pure returns (uint256) {
         return (slice == TakerDataSlices.Signature) ? dataLength : _getOffset(traits, uint256(slice));
     }
 
     function _getOffset(TakerTraits traits, uint256 sliceNumber) private pure returns (uint256) {
         uint256 bitShift = (sliceNumber << TAKER_DATA_SLICES_INDEX_BIT_SIZE_SHL);
-        return (TakerTraits.unwrap(traits) >> TAKER_DATA_SLICES_INDEXES_BIT_OFFSET >> bitShift) & TAKER_DATA_SLICES_INDEX_BIT_MAP;
+        return
+            ((TakerTraits.unwrap(traits) >> TAKER_DATA_SLICES_INDEXES_BIT_OFFSET) >> bitShift) &
+            TAKER_DATA_SLICES_INDEX_BIT_MAP;
     }
 }

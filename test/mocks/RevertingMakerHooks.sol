@@ -8,7 +8,13 @@ import { IMakerHooks } from "../../src/interfaces/IMakerHooks.sol";
 
 /// @dev Mock that reverts on specific hooks for testing
 contract RevertingMakerHooks {
-    enum HookType { None, PreTransferIn, PostTransferIn, PreTransferOut, PostTransferOut }
+    enum HookType {
+        None,
+        PreTransferIn,
+        PostTransferIn,
+        PreTransferOut,
+        PostTransferOut
+    }
 
     error PreTransferInReverted();
     error PostTransferInReverted();
@@ -21,19 +27,59 @@ contract RevertingMakerHooks {
         revertOn = hookType;
     }
 
-    function preTransferIn(address, address, address, address, uint256, uint256, bytes32, bytes calldata, bytes calldata) external view {
+    function preTransferIn(
+        address,
+        address,
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes32,
+        bytes calldata,
+        bytes calldata
+    ) external view {
         if (revertOn == HookType.PreTransferIn) revert PreTransferInReverted();
     }
 
-    function postTransferIn(address, address, address, address, uint256, uint256, bytes32, bytes calldata, bytes calldata) external view {
+    function postTransferIn(
+        address,
+        address,
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes32,
+        bytes calldata,
+        bytes calldata
+    ) external view {
         if (revertOn == HookType.PostTransferIn) revert PostTransferInReverted();
     }
 
-    function preTransferOut(address, address, address, address, uint256, uint256, bytes32, bytes calldata, bytes calldata) external view {
+    function preTransferOut(
+        address,
+        address,
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes32,
+        bytes calldata,
+        bytes calldata
+    ) external view {
         if (revertOn == HookType.PreTransferOut) revert PreTransferOutReverted();
     }
 
-    function postTransferOut(address, address, address, address, uint256, uint256, bytes32, bytes calldata, bytes calldata) external view {
+    function postTransferOut(
+        address,
+        address,
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes32,
+        bytes calldata,
+        bytes calldata
+    ) external view {
         if (revertOn == HookType.PostTransferOut) revert PostTransferOutReverted();
     }
 }

@@ -16,7 +16,7 @@ contract PureSquareRoot is PeggedFeesInvariants {
         balanceB = 1000e18;
         x0 = 1000e18;
         y0 = 1000e18;
-        linearWidth = 0;  // A = 0: pure square root
+        linearWidth = 0; // A = 0: pure square root
 
         testAmounts = new uint256[](3);
         testAmounts[0] = 10e18;

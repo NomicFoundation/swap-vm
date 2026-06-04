@@ -84,14 +84,22 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
 
         // Step 1: ExactIn swap
         Context memory ctxExactIn = createContextWithSpecificInstruction(
-            balanceIn, balanceOut, inputAmount, true, swapInstruction
+            balanceIn,
+            balanceOut,
+            inputAmount,
+            true,
+            swapInstruction
         );
 
         isFeeIn ? _feeAmountIn(ctxExactIn, feeBps) : _feeAmountOut(ctxExactIn, feeBps);
 
         // Step 2: ExactOut swap requesting the same outputAmount
         Context memory ctxExactOut = createContextWithSpecificInstruction(
-            balanceIn, balanceOut, ctxExactIn.swap.amountOut, false, swapInstruction
+            balanceIn,
+            balanceOut,
+            ctxExactIn.swap.amountOut,
+            false,
+            swapInstruction
         );
 
         isFeeIn ? _feeAmountIn(ctxExactOut, feeBps) : _feeAmountOut(ctxExactOut, feeBps);
@@ -99,7 +107,12 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
         // Step 3: Verify symmetry of ExactIn and ExactOut
         // For inverse formula, we need higher tolerance due to division operations
         uint256 tolerance = (swapInstruction == inverseFormula) ? 12000 : 2;
-        assertApproxEqAbs(ctxExactOut.swap.amountIn, inputAmount, tolerance, "Exchange rate inconsistent between exactIn and exactOut");
+        assertApproxEqAbs(
+            ctxExactOut.swap.amountIn,
+            inputAmount,
+            tolerance,
+            "Exchange rate inconsistent between exactIn and exactOut"
+        );
     }
 
     function test_FeeIn_WithXYCFormula() public {
@@ -141,7 +154,6 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
             true // isFeeIn
         );
     }
-
 
     function test_FeeIn_WithSmoothTransitionFormula() public {
         checkExactInExactOutSymmetry(
@@ -192,7 +204,6 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
             false // isFeeIn
         );
     }
-
 
     function test_FeeOut_WithSmoothTransitionFormula() public {
         checkExactInExactOutSymmetry(
@@ -252,8 +263,7 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
     function xycFormula(Context memory ctx, bytes calldata) internal pure {
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, "XYC: amountOut should be 0 for exactIn");
-            ctx.swap.amountOut = (ctx.swap.amountIn * ctx.swap.balanceOut) /
-                                (ctx.swap.balanceIn + ctx.swap.amountIn);
+            ctx.swap.amountOut = (ctx.swap.amountIn * ctx.swap.balanceOut) / (ctx.swap.balanceIn + ctx.swap.amountIn);
         } else {
             require(ctx.swap.amountIn == 0, "XYC: amountIn should be 0 for exactOut");
             ctx.swap.amountIn = Math.ceilDiv(
@@ -268,11 +278,11 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
      * @dev Uses rate of balanceOut/balanceIn as price
      */
     function linearFormula(Context memory ctx, bytes calldata) internal pure {
-        uint256 price = ctx.swap.balanceOut * ONE / ctx.swap.balanceIn; // price in 1e18 precision
+        uint256 price = (ctx.swap.balanceOut * ONE) / ctx.swap.balanceIn; // price in 1e18 precision
 
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, "Linear: amountOut should be 0 for exactIn");
-            ctx.swap.amountOut = ctx.swap.amountIn * price / ONE;
+            ctx.swap.amountOut = (ctx.swap.amountIn * price) / ONE;
         } else {
             require(ctx.swap.amountIn == 0, "Linear: amountIn should be 0 for exactOut");
             ctx.swap.amountIn = Math.ceilDiv(ctx.swap.amountOut * ONE, price);
@@ -284,8 +294,7 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
      * @dev Non-linear formula that maintains circular invariant
      */
     function circularFormula(Context memory ctx, bytes calldata) internal pure {
-        uint256 k2 = ctx.swap.balanceIn * ctx.swap.balanceIn +
-                     ctx.swap.balanceOut * ctx.swap.balanceOut;
+        uint256 k2 = ctx.swap.balanceIn * ctx.swap.balanceIn + ctx.swap.balanceOut * ctx.swap.balanceOut;
 
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, "Circular: amountOut should be 0 for exactIn");
@@ -315,13 +324,12 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
         }
     }
 
-
     /**
      * @notice Harmonic mean style formula: 2xy/(x+y) = k
      */
     function smoothTransitionFormula(Context memory ctx, bytes calldata) internal pure {
         // k = 2 * balanceIn * balanceOut / (balanceIn + balanceOut)
-        uint256 k = 2 * ctx.swap.balanceIn * ctx.swap.balanceOut / (ctx.swap.balanceIn + ctx.swap.balanceOut);
+        uint256 k = (2 * ctx.swap.balanceIn * ctx.swap.balanceOut) / (ctx.swap.balanceIn + ctx.swap.balanceOut);
 
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, "SmoothTransition: amountOut should be 0 for exactIn");
@@ -329,7 +337,7 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
 
             // Solve for newBalanceOut: 2 * newBalanceIn * newBalanceOut / (newBalanceIn + newBalanceOut) = k
             // This gives: newBalanceOut = k * newBalanceIn / (2 * newBalanceIn - k)
-            uint256 newBalanceOut = k * newBalanceIn / (2 * newBalanceIn - k);
+            uint256 newBalanceOut = (k * newBalanceIn) / (2 * newBalanceIn - k);
             ctx.swap.amountOut = ctx.swap.balanceOut - newBalanceOut;
         } else {
             require(ctx.swap.amountIn == 0, "SmoothTransition: amountIn should be 0 for exactOut");
@@ -347,7 +355,8 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
      */
     function inverseFormula(Context memory ctx, bytes calldata) internal pure {
         // k = 1/balanceIn + 1/balanceOut
-        uint256 k = (ONE * ctx.swap.balanceOut + ONE * ctx.swap.balanceIn) * ONE / (ctx.swap.balanceIn * ctx.swap.balanceOut);
+        uint256 k =
+            ((ONE * ctx.swap.balanceOut + ONE * ctx.swap.balanceIn) * ONE) / (ctx.swap.balanceIn * ctx.swap.balanceOut);
 
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, "Inverse: amountOut should be 0 for exactIn");
@@ -356,9 +365,9 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
             // 1/newBalanceIn + 1/newBalanceOut = k
             // 1/newBalanceOut = k - 1/newBalanceIn
             // newBalanceOut = 1 / (k - 1/newBalanceIn)
-            uint256 newInverseOut = k - ONE * ONE / newBalanceIn;
+            uint256 newInverseOut = k - (ONE * ONE) / newBalanceIn;
             require(newInverseOut > 0, "Inverse: Would result in negative balance");
-            uint256 newBalanceOut = ONE * ONE / newInverseOut;
+            uint256 newBalanceOut = (ONE * ONE) / newInverseOut;
             ctx.swap.amountOut = ctx.swap.balanceOut - newBalanceOut;
         } else {
             require(ctx.swap.amountIn == 0, "Inverse: amountIn should be 0 for exactOut");
@@ -367,7 +376,7 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
             // 1/newBalanceIn + 1/newBalanceOut = k
             // 1/newBalanceIn = k - 1/newBalanceOut
             // newBalanceIn = 1 / (k - 1/newBalanceOut)
-            uint256 newInverseIn = k - ONE * ONE / newBalanceOut;
+            uint256 newInverseIn = k - (ONE * ONE) / newBalanceOut;
             require(newInverseIn > 0, "Inverse: Would result in negative balance");
             uint256 newBalanceIn = Math.ceilDiv(ONE * ONE, newInverseIn);
             ctx.swap.amountIn = newBalanceIn - ctx.swap.balanceIn;
@@ -392,7 +401,7 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
             // This gives diminishing returns as trade size increases
 
             uint256 balance = ctx.swap.balanceIn; // Same as balanceOut for balanced pools
-            ctx.swap.amountOut = ctx.swap.amountIn * balance / (balance + 2 * ctx.swap.amountIn);
+            ctx.swap.amountOut = (ctx.swap.amountIn * balance) / (balance + 2 * ctx.swap.amountIn);
         } else {
             require(ctx.swap.amountIn == 0, "Hyperbolic: amountIn should be 0 for exactOut");
 
@@ -400,10 +409,7 @@ contract FeeIndifferencyToSwap is Test, FeeExperimental {
             uint256 balance = ctx.swap.balanceOut; // Same as balanceIn for balanced pools
             require(2 * ctx.swap.amountOut < balance, "Hyperbolic: Amount too large");
 
-            ctx.swap.amountIn = Math.ceilDiv(
-                ctx.swap.amountOut * balance,
-                balance - 2 * ctx.swap.amountOut
-            );
+            ctx.swap.amountIn = Math.ceilDiv(ctx.swap.amountOut * balance, balance - 2 * ctx.swap.amountOut);
         }
     }
 }

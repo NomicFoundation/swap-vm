@@ -77,39 +77,44 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
     ) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
         Program memory program = ProgramBuilder.init(_opcodes());
 
-        bytes memory feeInstruction = flatFeeBps > 0
-            ? program.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(flatFeeBps))
-            : bytes("");
+        bytes memory feeInstruction =
+            flatFeeBps > 0 ? program.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(flatFeeBps)) : bytes("");
 
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: bytes.concat(
-                program.build(Balances._dynamicBalancesXD, BalancesArgsBuilder.build(
-                    dynamic([address(tokenUSD), address(tokenETH)]),
-                    dynamic([balanceUSD, balanceETH])
-                )),
-                feeInstruction,
-                program.build(XYCConcentrate._xycConcentrateGrowLiquidity2D,
-                    XYCConcentrateArgsBuilder.build2D(sqrtPriceMin, sqrtPriceMax)
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: bytes.concat(
+                    program.build(
+                        Balances._dynamicBalancesXD,
+                        BalancesArgsBuilder.build(
+                            dynamic([address(tokenUSD), address(tokenETH)]),
+                            dynamic([balanceUSD, balanceETH])
+                        )
+                    ),
+                    feeInstruction,
+                    program.build(
+                        XYCConcentrate._xycConcentrateGrowLiquidity2D,
+                        XYCConcentrateArgsBuilder.build2D(sqrtPriceMin, sqrtPriceMax)
+                    )
                 )
-            )
-        }));
+            })
+        );
 
         bytes32 orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
@@ -117,27 +122,30 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
     }
 
     function _takerData(bool isExactIn, bytes memory sig) internal view returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: taker,
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: sig
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: taker,
+                    isExactIn: isExactIn,
+                    shouldUnwrapWeth: false,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: sig
+                })
+            );
     }
 
     function test_DetailedFeeTracking_PerIteration() public {
@@ -150,7 +158,11 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
         uint256 initialETH = 1000e18;
         uint256 spotPrice = 3000e18;
         (, uint256 bLt, uint256 bGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-            initialETH, initialUSD, Math.sqrt(spotPrice * 1e18), sqrtPriceMin, sqrtPriceMax
+            initialETH,
+            initialUSD,
+            Math.sqrt(spotPrice * 1e18),
+            sqrtPriceMin,
+            sqrtPriceMax
         );
         uint256 actualBalanceUSD = address(tokenUSD) > address(tokenETH) ? bGt : bLt;
         uint256 actualBalanceETH = address(tokenUSD) > address(tokenETH) ? bLt : bGt;
@@ -180,7 +192,11 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
 
             // First swap: exactOut (ETH->USD)
             (ISwapVM.Order memory snapshot1, bytes memory snap1Sig) = _createOrderWithBalances(
-                currentUSD, currentETH, sqrtPriceMin, sqrtPriceMax, 0
+                currentUSD,
+                currentETH,
+                sqrtPriceMin,
+                sqrtPriceMax,
+                0
             );
             bytes32 snap1Hash = swapVM.hash(snapshot1);
 
@@ -199,21 +215,33 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
 
             // Second swap: exactIn (USD->ETH)
             (ISwapVM.Order memory snapshot2, bytes memory snap2Sig) = _createOrderWithBalances(
-                mainUSD_after1, mainETH_after1, sqrtPriceMin, sqrtPriceMax, 0
+                mainUSD_after1,
+                mainETH_after1,
+                sqrtPriceMin,
+                sqrtPriceMax,
+                0
             );
             bytes32 snap2Hash = swapVM.hash(snapshot2);
 
             vm.prank(taker);
-            (, uint256 ethReceived_main,) = swapVM.swap(
-                mainOrder, tokenUSD, tokenETH, swapAmountUSD, _takerData(true, mainSig)
+            (, uint256 ethReceived_main, ) = swapVM.swap(
+                mainOrder,
+                tokenUSD,
+                tokenETH,
+                swapAmountUSD,
+                _takerData(true, mainSig)
             );
 
-            uint256 flatFeeAmount = swapAmountUSD * FLAT_FEE_BPS / BPS;
+            uint256 flatFeeAmount = (swapAmountUSD * FLAT_FEE_BPS) / BPS;
             uint256 amountInAfterFee = swapAmountUSD - flatFeeAmount;
 
             vm.prank(taker);
-            (, uint256 ethReceived_snap,) = swapVM.swap(
-                snapshot2, tokenUSD, tokenETH, amountInAfterFee, _takerData(true, snap2Sig)
+            (, uint256 ethReceived_snap, ) = swapVM.swap(
+                snapshot2,
+                tokenUSD,
+                tokenETH,
+                amountInAfterFee,
+                _takerData(true, snap2Sig)
             );
 
             assertApproxEqAbs(ethReceived_main, ethReceived_snap, 1e10, "AmountOut mismatch");
@@ -238,7 +266,10 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
         uint256 finalETH = swapVM.balances(mainHash, tokenETH);
 
         (, uint256 finalSqrtP) = XYCConcentrateArgsBuilder.computeLiquidityAndPrice(
-            finalETH, finalUSD, sqrtPriceMin, sqrtPriceMax
+            finalETH,
+            finalUSD,
+            sqrtPriceMin,
+            sqrtPriceMax
         );
         uint256 finalSpotPrice = (finalSqrtP * finalSqrtP) / 1e18;
         uint256 ethFeesInUSD = (totalFeeETH * spotPrice) / 1e18;
@@ -267,13 +298,21 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
         uint256 initialETH = 1000e18;
         uint256 spotPrice = 3000e18;
         (, uint256 bLt, uint256 bGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-            initialETH, initialUSD, Math.sqrt(spotPrice * 1e18), sqrtPriceMin, sqrtPriceMax
+            initialETH,
+            initialUSD,
+            Math.sqrt(spotPrice * 1e18),
+            sqrtPriceMin,
+            sqrtPriceMax
         );
         uint256 actualBalanceUSD = address(tokenUSD) > address(tokenETH) ? bGt : bLt;
         uint256 actualBalanceETH = address(tokenUSD) > address(tokenETH) ? bLt : bGt;
 
         (ISwapVM.Order memory mainOrder, bytes memory mainSig) = _createOrderWithBalances(
-            actualBalanceUSD, actualBalanceETH, sqrtPriceMin, sqrtPriceMax, FLAT_FEE_BPS
+            actualBalanceUSD,
+            actualBalanceETH,
+            sqrtPriceMin,
+            sqrtPriceMax,
+            FLAT_FEE_BPS
         );
         bytes32 mainHash = swapVM.hash(mainOrder);
 
@@ -291,7 +330,11 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
 
             // First swap: exactOut (USD->ETH)
             (ISwapVM.Order memory snapshot1, bytes memory snap1Sig) = _createOrderWithBalances(
-                currentUSD, currentETH, sqrtPriceMin, sqrtPriceMax, 0
+                currentUSD,
+                currentETH,
+                sqrtPriceMin,
+                sqrtPriceMax,
+                0
             );
             bytes32 snap1Hash = swapVM.hash(snapshot1);
 
@@ -310,14 +353,18 @@ contract XYCConcentrateFeeTrackingDetailedTest is Test, OpcodesDebug {
 
             // Second swap: exactIn (ETH->USD)
             (ISwapVM.Order memory snapshot2, bytes memory snap2Sig) = _createOrderWithBalances(
-                mainUSD_after1, mainETH_after1, sqrtPriceMin, sqrtPriceMax, 0
+                mainUSD_after1,
+                mainETH_after1,
+                sqrtPriceMin,
+                sqrtPriceMax,
+                0
             );
             bytes32 snap2Hash = swapVM.hash(snapshot2);
 
             vm.prank(taker);
             swapVM.swap(mainOrder, tokenETH, tokenUSD, swapAmountETH, _takerData(true, mainSig));
 
-            uint256 flatFeeAmount = swapAmountETH * FLAT_FEE_BPS / BPS;
+            uint256 flatFeeAmount = (swapAmountETH * FLAT_FEE_BPS) / BPS;
             uint256 amountInAfterFee = swapAmountETH - flatFeeAmount;
             vm.prank(taker);
             swapVM.swap(snapshot2, tokenETH, tokenUSD, amountInAfterFee, _takerData(true, snap2Sig));

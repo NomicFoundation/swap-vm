@@ -88,11 +88,13 @@ contract RunLoopTest is Test, OpcodesDebug {
 
         // Create a valid program that properly terminates
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
+            program.build(
+                _dynamicBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(100e18)])
-                )),
+                )
+            ),
             // Multiple instructions to verify PC advances correctly
             program.build(_salt, ControlsArgsBuilder.buildSalt(uint64(1))),
             program.build(_salt, ControlsArgsBuilder.buildSalt(uint64(2))),
@@ -120,9 +122,7 @@ contract RunLoopTest is Test, OpcodesDebug {
         bytes memory takerData = _signAndPackTakerData(order);
 
         // Empty program fails with RunLoopExcessiveCall(0, 0)
-        vm.expectRevert(
-            abi.encodeWithSelector(ContextLib.RunLoopExcessiveCall.selector, 0, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ContextLib.RunLoopExcessiveCall.selector, 0, 0));
         swapVM.swap(order, address(tokenA), address(tokenB), 1e18, takerData);
     }
 
@@ -147,7 +147,7 @@ contract RunLoopTest is Test, OpcodesDebug {
         // Manually construct bytecode with invalid opcode
         bytes memory bytecode = abi.encodePacked(
             uint8(200), // Invalid opcode
-            uint8(0)    // Args length
+            uint8(0) // Args length
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -169,17 +169,23 @@ contract RunLoopTest is Test, OpcodesDebug {
         Program memory program = ProgramBuilder.init(_opcodes());
 
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
+            program.build(
+                _dynamicBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(100e18)])
-                )), // Level 0: DynamicBalances → runLoop
+                )
+            ), // Level 0: DynamicBalances → runLoop
             program.build(_decayXD, DecayArgsBuilder.build(3600)), // Level 1: Decay → runLoop
             program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(0.01e9)), // Level 2: Fee (1%) → runLoop
-            program.build(_requireMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), uint64(0.8e9), uint64(1.2e9))), // Level 3: MinRate → runLoop
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(Math.sqrt(0.5e36), Math.sqrt(2.0e36))) // Level 4: XYCConcentrate (terminal)
+            program.build(
+                _requireMinRate1D,
+                MinRateArgsBuilder.build(address(tokenA), address(tokenB), uint64(0.8e9), uint64(1.2e9))
+            ), // Level 3: MinRate → runLoop
+            program.build(
+                _xycConcentrateGrowLiquidity2D,
+                XYCConcentrateArgsBuilder.build2D(Math.sqrt(0.5e36), Math.sqrt(2.0e36))
+            ) // Level 4: XYCConcentrate (terminal)
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -196,11 +202,13 @@ contract RunLoopTest is Test, OpcodesDebug {
         Program memory program = ProgramBuilder.init(_opcodes());
 
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
+            program.build(
+                _dynamicBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(100e18)])
-                )),
+                )
+            ),
             program.build(_decayXD, DecayArgsBuilder.build(3600)),
             program.build(_xycSwapXD)
         );
@@ -231,16 +239,17 @@ contract RunLoopTest is Test, OpcodesDebug {
     function test_VeryLongProgram() public {
         Program memory program = ProgramBuilder.init(_opcodes());
 
-        bytes memory bytecode = program.build(_dynamicBalancesXD,
+        bytes memory bytecode = program.build(
+            _dynamicBalancesXD,
             BalancesArgsBuilder.build(
                 dynamic([address(tokenA), address(tokenB)]),
                 dynamic([uint256(100e18), uint256(100e18)])
-            ));
+            )
+        );
 
         // Add 20 salt instructions (harmless, just increase program length)
         for (uint64 i = 0; i < 20; i++) {
-            bytecode = bytes.concat(bytecode,
-                program.build(_salt, ControlsArgsBuilder.buildSalt(i)));
+            bytecode = bytes.concat(bytecode, program.build(_salt, ControlsArgsBuilder.buildSalt(i)));
         }
 
         // Add nested runLoop chain
@@ -253,8 +262,7 @@ contract RunLoopTest is Test, OpcodesDebug {
 
         // Add more salts
         for (uint64 i = 20; i < 40; i++) {
-            bytecode = bytes.concat(bytecode,
-                program.build(_salt, ControlsArgsBuilder.buildSalt(i)));
+            bytecode = bytes.concat(bytecode, program.build(_salt, ControlsArgsBuilder.buildSalt(i)));
         }
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -276,32 +284,38 @@ contract RunLoopTest is Test, OpcodesDebug {
         bytes memory strategy1 = program.build(_xycSwapXD);
 
         // Strategy 2: Pegged (optimized for stable pairs)
-        bytes memory strategy2 = program.build(_peggedSwapGrowPriceRange2D,
-            PeggedSwapArgsBuilder.build(PeggedSwapArgsBuilder.Args({
-                x0: 50e18,          // balanceIn
-                y0: 50e18,          // balanceOut
-                linearWidth: 0.02e9, // 2% width for stable pairs
-                rateLt: 1,
-                rateGt: 1
-            })));
+        bytes memory strategy2 = program.build(
+            _peggedSwapGrowPriceRange2D,
+            PeggedSwapArgsBuilder.build(
+                PeggedSwapArgsBuilder.Args({
+                    x0: 50e18, // balanceIn
+                    y0: 50e18, // balanceOut
+                    linearWidth: 0.02e9, // 2% width for stable pairs
+                    rateLt: 1,
+                    rateGt: 1
+                })
+            )
+        );
 
         // Pack strategies with lengths
         bytes memory selectorArgs = abi.encodePacked(
-            address(selector),              // Extruction target
-            uint8(2),                       // 2 strategies
-            uint16(strategy1.length),       // Strategy 1 length
-            strategy1,                      // Strategy 1 bytecode
-            uint16(strategy2.length),       // Strategy 2 length
-            strategy2                       // Strategy 2 bytecode
+            address(selector), // Extruction target
+            uint8(2), // 2 strategies
+            uint16(strategy1.length), // Strategy 1 length
+            strategy1, // Strategy 1 bytecode
+            uint16(strategy2.length), // Strategy 2 length
+            strategy2 // Strategy 2 bytecode
         );
 
         // Main program: Balances → BestRouteSelector
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
+            program.build(
+                _dynamicBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(100e18)])
-                )),
+                )
+            ),
             program.build(_extruction, selectorArgs)
         );
 
@@ -322,26 +336,29 @@ contract RunLoopTest is Test, OpcodesDebug {
     // ============================================
 
     function _createOrder(bytes memory program) internal view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(ISwapVM.Order memory order) internal view returns (bytes memory) {
@@ -349,33 +366,36 @@ contract RunLoopTest is Test, OpcodesDebug {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPK, orderHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: true,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: bytes(""),
-            to: taker,
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: address(0),
+                    isExactIn: true,
+                    shouldUnwrapWeth: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: bytes(""),
+                    to: taker,
+                    deadline: 0,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: signature
+                })
+            );
     }
 
-    function _executeSwap(ISwapVM.Order memory order, uint256 amount)
-        internal
-        returns (uint256 amountIn, uint256 amountOut, bytes32 orderHash)
-    {
+    function _executeSwap(
+        ISwapVM.Order memory order,
+        uint256 amount
+    ) internal returns (uint256 amountIn, uint256 amountOut, bytes32 orderHash) {
         bytes memory takerData = _signAndPackTakerData(order);
         return swapVM.swap(order, address(tokenA), address(tokenB), amount, takerData);
     }

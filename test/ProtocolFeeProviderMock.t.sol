@@ -18,9 +18,9 @@ contract ProtocolFeeProviderMockTest is Test {
 
     function setUp() public {
         feeProvider = new ProtocolFeeProviderMock(
-            INITIAL_FEE_BPS,           // feeBps: 0.2% in 1e9 scale
+            INITIAL_FEE_BPS, // feeBps: 0.2% in 1e9 scale
             address(feeRecipient), // address to receive fees
-            address(this)      // owner who can update settings
+            address(this) // owner who can update settings
         );
     }
 
@@ -69,5 +69,4 @@ contract ProtocolFeeProviderMockTest is Test {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(0x5678)));
         feeProvider.setFeeBpsAndRecipient(0.003e9, address(0x1234));
     }
-
 }

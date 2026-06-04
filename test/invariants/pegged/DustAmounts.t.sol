@@ -19,9 +19,9 @@ contract DustAmounts is PeggedFeesInvariants {
 
         // Dust amounts
         testAmounts = new uint256[](3);
-        testAmounts[0] = 1000;      // 1000 wei
-        testAmounts[1] = 10000;     // 10000 wei
-        testAmounts[2] = 1e12;      // 0.000001 tokens
+        testAmounts[0] = 1000; // 1000 wei
+        testAmounts[1] = 10000; // 10000 wei
+        testAmounts[2] = 1e12; // 0.000001 tokens
 
         // Skip monotonicity for dust amounts (rounding > price impact)
         skipMonotonicity = true;

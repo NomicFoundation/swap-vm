@@ -8,14 +8,12 @@ import { Aqua } from "@1inch/aqua/src/Aqua.sol";
 import { AquaSwapVMTest } from "./base/AquaSwapVMTest.sol";
 import { ISwapVM, SwapVM } from "../src/SwapVM.sol";
 
-
 import { TakerTraitsLib } from "../src/libs/TakerTraits.sol";
 import { MockTakerBrokenCallback } from "./mocks/MockTakerBrokenCallback.sol";
 
 /// @title Negative tests for taker transfers in callback through Aqua
 /// @notice Tests various failure scenarios when taker callback doesn't properly push tokens to Aqua
 contract TakerCallbackAquaNegativeTest is AquaSwapVMTest {
-
     MockTakerBrokenCallback public brokenTaker;
 
     uint256 constant SWAP_AMOUNT = 50e18;
@@ -56,27 +54,30 @@ contract TakerCallbackAquaNegativeTest is AquaSwapVMTest {
     }
 
     function _buildTakerData(address takerAddress, bool isExactIn) internal pure returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: takerAddress,
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: true,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false, // Taker should push via callback
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: ""
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: takerAddress,
+                    isExactIn: isExactIn,
+                    shouldUnwrapWeth: false,
+                    hasPreTransferInCallback: true,
+                    hasPreTransferOutCallback: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false, // Taker should push via callback
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: ""
+                })
+            );
     }
 
     function _executeSwap() internal returns (uint256 amountIn, uint256 amountOut) {
@@ -89,13 +90,15 @@ contract TakerCallbackAquaNegativeTest is AquaSwapVMTest {
         brokenTaker.setBehavior(MockTakerBrokenCallback.CallbackBehavior.NoPush);
 
         // Expect revert: balance stays at 200e18, but we need 200e18 + 50e18 = 250e18
-        vm.expectRevert(abi.encodeWithSelector(
-            SwapVM.AquaBalanceInsufficientAfterTakerPush.selector,
-            _setup.balanceB,  // balance unchanged
-            _setup.balanceB,  // original balance
-            SWAP_AMOUNT,
-            0                 // amountNetPulled (no protocol fee)
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SwapVM.AquaBalanceInsufficientAfterTakerPush.selector,
+                _setup.balanceB, // balance unchanged
+                _setup.balanceB, // original balance
+                SWAP_AMOUNT,
+                0 // amountNetPulled (no protocol fee)
+            )
+        );
 
         _executeSwap();
     }
@@ -108,13 +111,15 @@ contract TakerCallbackAquaNegativeTest is AquaSwapVMTest {
         brokenTaker.setPushAmountOverride(insufficientAmount);
 
         // Expect revert: balance is 200e18 + 25e18 = 225e18, but we need 250e18
-        vm.expectRevert(abi.encodeWithSelector(
-            SwapVM.AquaBalanceInsufficientAfterTakerPush.selector,
-            _setup.balanceB + insufficientAmount,
-            _setup.balanceB,
-            SWAP_AMOUNT,
-            0               // amountNetPulled (no protocol fee)
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SwapVM.AquaBalanceInsufficientAfterTakerPush.selector,
+                _setup.balanceB + insufficientAmount,
+                _setup.balanceB,
+                SWAP_AMOUNT,
+                0 // amountNetPulled (no protocol fee)
+            )
+        );
 
         _executeSwap();
     }
@@ -148,13 +153,15 @@ contract TakerCallbackAquaNegativeTest is AquaSwapVMTest {
         brokenTaker.setPushAmountOverride(SWAP_AMOUNT - 1);
 
         // Expect revert: balance is 200e18 + (50e18 - 1), but we need 250e18
-        vm.expectRevert(abi.encodeWithSelector(
-            SwapVM.AquaBalanceInsufficientAfterTakerPush.selector,
-            _setup.balanceB + SWAP_AMOUNT - 1,
-            _setup.balanceB,
-            SWAP_AMOUNT,
-            0               // amountNetPulled (no protocol fee)
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SwapVM.AquaBalanceInsufficientAfterTakerPush.selector,
+                _setup.balanceB + SWAP_AMOUNT - 1,
+                _setup.balanceB,
+                SWAP_AMOUNT,
+                0 // amountNetPulled (no protocol fee)
+            )
+        );
 
         _executeSwap();
     }

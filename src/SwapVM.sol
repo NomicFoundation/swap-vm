@@ -17,7 +17,7 @@ import { Rescuable } from "@1inch/solidity-utils/contracts/mixins/Rescuable.sol"
 import { ISwapVM } from "./interfaces/ISwapVM.sol";
 import { IMakerHooks } from "./interfaces/IMakerHooks.sol";
 import { ITakerCallbacks } from "./interfaces/ITakerCallbacks.sol";
-import { Context, ContextLib, VM, SwapRegisters, SwapQuery  } from "./libs/VM.sol";
+import { Context, ContextLib, VM, SwapRegisters, SwapQuery } from "./libs/VM.sol";
 import { MakerTraits, MakerTraitsLib } from "./libs/MakerTraits.sol";
 import { TakerTraits, TakerTraitsLib } from "./libs/TakerTraits.sol";
 
@@ -37,7 +37,12 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
     /// @dev Signature verification failed for the order
     error BadSignature(address maker, bytes32 orderHash, bytes signature);
     /// @dev Aqua balance insufficient after taker pushed tokens
-    error AquaBalanceInsufficientAfterTakerPush(uint256 balance, uint256 preBalance, uint256 amount, uint256 amountNetPulled);
+    error AquaBalanceInsufficientAfterTakerPush(
+        uint256 balance,
+        uint256 preBalance,
+        uint256 amount,
+        uint256 amountNetPulled
+    );
     /// @dev Cannot use shouldUnwrapWeth with Aqua orders
     error MakerTraitsUnwrapIsIncompatibleWithAqua();
     /// @dev Cannot use custom receiver with Aqua orders
@@ -64,9 +69,9 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
     /// @notice EIP-712 typehash for Order struct
     bytes32 public constant ORDER_TYPEHASH = keccak256(
         "Order("
-            "address maker,"
-            "uint256 traits,"
-            "bytes data"
+        "address maker,"
+        "uint256 traits,"
+        "bytes data"
         ")"
     );
 
@@ -81,7 +86,13 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
     /// @param owner Address of the owner of the contract, used for rescuing funds only
     /// @param name EIP-712 domain name
     /// @param version EIP-712 domain version
-    constructor(address aqua, address weth, address owner, string memory name, string memory version) EIP712(name, version) OnlyWethReceiver(weth) Rescuable(owner) {
+    constructor(
+        address aqua,
+        address weth,
+        address owner,
+        string memory name,
+        string memory version
+    ) EIP712(name, version) OnlyWethReceiver(weth) Rescuable(owner) {
         AQUA = IAqua(aqua);
     }
 
@@ -99,12 +110,8 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
             return keccak256(abi.encode(order));
         }
 
-        return _hashTypedDataV4(keccak256(abi.encode(
-            ORDER_TYPEHASH,
-            order.maker,
-            order.traits,
-            keccak256(order.data)
-        )));
+        return
+            _hashTypedDataV4(keccak256(abi.encode(ORDER_TYPEHASH, order.maker, order.traits, keccak256(order.data))));
     }
 
     /// @dev Method can be executed in a static-call
@@ -145,7 +152,13 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
         });
 
         if (order.traits.useAquaInsteadOfSignature()) {
-            (ctx.swap.balanceIn, ctx.swap.balanceOut) = AQUA.safeBalances(order.maker, address(this), orderHash, tokenIn, tokenOut);
+            (ctx.swap.balanceIn, ctx.swap.balanceOut) = AQUA.safeBalances(
+                order.maker,
+                address(this),
+                orderHash,
+                tokenIn,
+                tokenOut
+            );
         }
 
         (amountIn, amountOut) = ctx.runLoop();
@@ -191,10 +204,19 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
         });
 
         if (order.traits.useAquaInsteadOfSignature()) {
-            (ctx.swap.balanceIn, ctx.swap.balanceOut) = AQUA.safeBalances(order.maker, address(this), orderHash, tokenIn, tokenOut);
+            (ctx.swap.balanceIn, ctx.swap.balanceOut) = AQUA.safeBalances(
+                order.maker,
+                address(this),
+                orderHash,
+                tokenIn,
+                tokenOut
+            );
         } else {
             bytes calldata signature = takerTraits.signature(takerData);
-            require(order.maker.recoverOrIsValidSignature(orderHash, signature), BadSignature(order.maker, orderHash, signature));
+            require(
+                order.maker.recoverOrIsValidSignature(orderHash, signature),
+                BadSignature(order.maker, orderHash, signature)
+            );
         }
 
         uint256 originalAquaBalanceIn = ctx.swap.balanceIn;
@@ -214,65 +236,186 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
         emit Swapped(orderHash, order.maker, msg.sender, tokenIn, tokenOut, amountIn, amountOut);
     }
 
-    function _transferIn(Context memory ctx, ISwapVM.Order calldata order, TakerTraits takerTraits, bytes calldata takerData, uint256 originalAquaBalanceIn) private {
+    function _transferIn(
+        Context memory ctx,
+        ISwapVM.Order calldata order,
+        TakerTraits takerTraits,
+        bytes calldata takerData,
+        uint256 originalAquaBalanceIn
+    ) private {
         if (order.traits.hasPreTransferInHook()) {
-            (IMakerHooks target, bytes calldata makerHookData) = order.traits.preTransferInHook(order.maker, order.data);
+            (IMakerHooks target, bytes calldata makerHookData) = order.traits.preTransferInHook(
+                order.maker,
+                order.data
+            );
             bytes calldata takerHookData = takerTraits.preTransferInHookData(takerData);
-            target.preTransferIn(order.maker, ctx.query.taker, ctx.query.tokenIn, ctx.query.tokenOut, ctx.swap.amountIn, ctx.swap.amountOut, ctx.query.orderHash, makerHookData, takerHookData);
+            target.preTransferIn(
+                order.maker,
+                ctx.query.taker,
+                ctx.query.tokenIn,
+                ctx.query.tokenOut,
+                ctx.swap.amountIn,
+                ctx.swap.amountOut,
+                ctx.query.orderHash,
+                makerHookData,
+                takerHookData
+            );
         }
 
         if (takerTraits.hasPreTransferInCallback()) {
             bytes calldata callbackData = takerTraits.preTransferInCallbackData(takerData);
-            ITakerCallbacks(ctx.query.taker).preTransferInCallback(order.maker, ctx.query.taker, ctx.query.tokenIn, ctx.query.tokenOut, ctx.swap.amountIn, ctx.swap.amountOut, ctx.query.orderHash, callbackData);
+            ITakerCallbacks(ctx.query.taker).preTransferInCallback(
+                order.maker,
+                ctx.query.taker,
+                ctx.query.tokenIn,
+                ctx.query.tokenOut,
+                ctx.swap.amountIn,
+                ctx.swap.amountOut,
+                ctx.query.orderHash,
+                callbackData
+            );
         }
 
         if (ctx.swap.amountIn > 0) {
             if (order.traits.useAquaInsteadOfSignature()) {
                 require(!order.traits.shouldUnwrapWeth(), MakerTraitsUnwrapIsIncompatibleWithAqua());
-                require(order.maker == order.traits.receiver(order.maker), MakerTraitsCustomReceiverIsIncompatibleWithAqua());
+                require(
+                    order.maker == order.traits.receiver(order.maker),
+                    MakerTraitsCustomReceiverIsIncompatibleWithAqua()
+                );
 
                 if (takerTraits.useTransferFromAndAquaPush()) {
                     IERC20(ctx.query.tokenIn).safeTransferFrom(ctx.query.taker, address(this), ctx.swap.amountIn);
                     IERC20(ctx.query.tokenIn).forceApprove(address(AQUA), ctx.swap.amountIn);
                     AQUA.push(order.maker, address(this), ctx.query.orderHash, ctx.query.tokenIn, ctx.swap.amountIn);
                 } else {
-                    (uint256 balanceIn,) = AQUA.rawBalances(order.maker, address(this), ctx.query.orderHash, ctx.query.tokenIn);
-                    require(balanceIn >= originalAquaBalanceIn + ctx.swap.amountIn - ctx.swap.amountNetPulled, AquaBalanceInsufficientAfterTakerPush(balanceIn, originalAquaBalanceIn, ctx.swap.amountIn, ctx.swap.amountNetPulled));
+                    (uint256 balanceIn, ) = AQUA.rawBalances(
+                        order.maker,
+                        address(this),
+                        ctx.query.orderHash,
+                        ctx.query.tokenIn
+                    );
+                    require(
+                        balanceIn >= originalAquaBalanceIn + ctx.swap.amountIn - ctx.swap.amountNetPulled,
+                        AquaBalanceInsufficientAfterTakerPush(
+                            balanceIn,
+                            originalAquaBalanceIn,
+                            ctx.swap.amountIn,
+                            ctx.swap.amountNetPulled
+                        )
+                    );
                 }
             } else {
-                _transferFrom(ctx.query.taker, order.traits.receiver(order.maker), ctx.query.tokenIn, ctx.swap.amountIn, ctx.query.orderHash, false, order.traits.shouldUnwrapWeth());
+                _transferFrom(
+                    ctx.query.taker,
+                    order.traits.receiver(order.maker),
+                    ctx.query.tokenIn,
+                    ctx.swap.amountIn,
+                    ctx.query.orderHash,
+                    false,
+                    order.traits.shouldUnwrapWeth()
+                );
             }
         }
 
         if (order.traits.hasPostTransferInHook()) {
-            (IMakerHooks target, bytes calldata makerHookData) = order.traits.postTransferInHook(order.maker, order.data);
+            (IMakerHooks target, bytes calldata makerHookData) = order.traits.postTransferInHook(
+                order.maker,
+                order.data
+            );
             bytes calldata takerHookData = takerTraits.postTransferInHookData(takerData);
-            target.postTransferIn(order.maker, ctx.query.taker, ctx.query.tokenIn, ctx.query.tokenOut, ctx.swap.amountIn, ctx.swap.amountOut, ctx.query.orderHash, makerHookData, takerHookData);
+            target.postTransferIn(
+                order.maker,
+                ctx.query.taker,
+                ctx.query.tokenIn,
+                ctx.query.tokenOut,
+                ctx.swap.amountIn,
+                ctx.swap.amountOut,
+                ctx.query.orderHash,
+                makerHookData,
+                takerHookData
+            );
         }
     }
 
-    function _transferOut(Context memory ctx, ISwapVM.Order calldata order, TakerTraits takerTraits, bytes calldata takerData) private {
+    function _transferOut(
+        Context memory ctx,
+        ISwapVM.Order calldata order,
+        TakerTraits takerTraits,
+        bytes calldata takerData
+    ) private {
         if (order.traits.hasPreTransferOutHook()) {
-            (IMakerHooks target, bytes calldata makerHookData) = order.traits.preTransferOutHook(order.maker, order.data);
+            (IMakerHooks target, bytes calldata makerHookData) = order.traits.preTransferOutHook(
+                order.maker,
+                order.data
+            );
             bytes calldata takerHookData = takerTraits.preTransferOutHookData(takerData);
-            target.preTransferOut(order.maker, ctx.query.taker, ctx.query.tokenIn, ctx.query.tokenOut, ctx.swap.amountIn, ctx.swap.amountOut, ctx.query.orderHash, makerHookData, takerHookData);
+            target.preTransferOut(
+                order.maker,
+                ctx.query.taker,
+                ctx.query.tokenIn,
+                ctx.query.tokenOut,
+                ctx.swap.amountIn,
+                ctx.swap.amountOut,
+                ctx.query.orderHash,
+                makerHookData,
+                takerHookData
+            );
         }
 
         if (takerTraits.hasPreTransferOutCallback()) {
             bytes calldata callbackData = takerTraits.preTransferOutCallbackData(takerData);
-            ITakerCallbacks(ctx.query.taker).preTransferOutCallback(order.maker, ctx.query.taker, ctx.query.tokenIn, ctx.query.tokenOut, ctx.swap.amountIn, ctx.swap.amountOut, ctx.query.orderHash, callbackData);
+            ITakerCallbacks(ctx.query.taker).preTransferOutCallback(
+                order.maker,
+                ctx.query.taker,
+                ctx.query.tokenIn,
+                ctx.query.tokenOut,
+                ctx.swap.amountIn,
+                ctx.swap.amountOut,
+                ctx.query.orderHash,
+                callbackData
+            );
         }
 
-        _transferFrom(order.maker, takerTraits.to(takerData, msg.sender), ctx.query.tokenOut, ctx.swap.amountOut, ctx.query.orderHash, order.traits.useAquaInsteadOfSignature(), takerTraits.shouldUnwrapWeth());
+        _transferFrom(
+            order.maker,
+            takerTraits.to(takerData, msg.sender),
+            ctx.query.tokenOut,
+            ctx.swap.amountOut,
+            ctx.query.orderHash,
+            order.traits.useAquaInsteadOfSignature(),
+            takerTraits.shouldUnwrapWeth()
+        );
 
         if (order.traits.hasPostTransferOutHook()) {
-            (IMakerHooks target, bytes calldata makerHookData) = order.traits.postTransferOutHook(order.maker, order.data);
+            (IMakerHooks target, bytes calldata makerHookData) = order.traits.postTransferOutHook(
+                order.maker,
+                order.data
+            );
             bytes calldata takerHookData = takerTraits.postTransferOutHookData(takerData);
-            target.postTransferOut(order.maker, ctx.query.taker, ctx.query.tokenIn, ctx.query.tokenOut, ctx.swap.amountIn, ctx.swap.amountOut, ctx.query.orderHash, makerHookData, takerHookData);
+            target.postTransferOut(
+                order.maker,
+                ctx.query.taker,
+                ctx.query.tokenIn,
+                ctx.query.tokenOut,
+                ctx.swap.amountIn,
+                ctx.swap.amountOut,
+                ctx.query.orderHash,
+                makerHookData,
+                takerHookData
+            );
         }
     }
 
-    function _transferFrom(address from, address to, address token, uint256 amount, bytes32 orderHash, bool useAqua, bool unwrapWeth) private {
+    function _transferFrom(
+        address from,
+        address to,
+        address token,
+        uint256 amount,
+        bytes32 orderHash,
+        bool useAqua,
+        bool unwrapWeth
+    ) private {
         if (unwrapWeth) {
             _transferOrPull(from, address(this), token, amount, orderHash, useAqua);
             IWETH(token).safeWithdrawTo(amount, to);
@@ -281,7 +424,14 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
         }
     }
 
-    function _transferOrPull(address from, address to, address token, uint256 amount, bytes32 orderHash, bool useAqua) private {
+    function _transferOrPull(
+        address from,
+        address to,
+        address token,
+        uint256 amount,
+        bytes32 orderHash,
+        bool useAqua
+    ) private {
         if (useAqua) {
             AQUA.pull(from, orderHash, token, amount, to);
         } else {
@@ -290,5 +440,10 @@ abstract contract SwapVM is EIP712, OnlyWethReceiver, Rescuable {
     }
 
     /// @dev Override this function in router to provide supported instruction list
-    function _instructions() internal pure virtual returns (function(Context memory, bytes calldata) internal[] memory) { }
+    function _instructions()
+        internal
+        pure
+        virtual
+        returns (function(Context memory, bytes calldata) internal[] memory)
+    {}
 }

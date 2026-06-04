@@ -395,13 +395,11 @@ contract LimitSwapGas is Test, OpcodesDebug {
     function _createLimitSwapOrder(bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -410,25 +408,30 @@ contract LimitSwapGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createDutchAuctionOrder(bool isAuctionIn, bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createDutchAuctionOrder(
+        bool isAuctionIn,
+        bool isExactIn
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         uint40 startTime = uint40(block.timestamp);
         uint16 duration = 300;
         uint64 decayFactor = 0.5e18; // 50% decay
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            isAuctionIn ?
-                program.build(_dutchAuctionBalanceIn1D,
-                    DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)) :
-                program.build(_dutchAuctionBalanceOut1D,
-                    DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            isAuctionIn
+                ? program.build(
+                    _dutchAuctionBalanceIn1D,
+                    DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)
+                )
+                : program.build(
+                    _dutchAuctionBalanceOut1D,
+                    DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)
+                ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -445,22 +448,24 @@ contract LimitSwapGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_twap,
-                TWAPSwapArgsBuilder.build(TWAPSwapArgsBuilder.TwapArgs({
-                    balanceIn: balanceIn,
-                    balanceOut: balanceOut,
-                    startTime: startTime,
-                    duration: duration,
-                    priceBumpAfterIlliquidity: 1.2e18,
-                    minTradeAmountOut: 0.1e18
-                }))),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(
+                _twap,
+                TWAPSwapArgsBuilder.build(
+                    TWAPSwapArgsBuilder.TwapArgs({
+                        balanceIn: balanceIn,
+                        balanceOut: balanceOut,
+                        startTime: startTime,
+                        duration: duration,
+                        priceBumpAfterIlliquidity: 1.2e18,
+                        minTradeAmountOut: 0.1e18
+                    })
+                )
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -475,15 +480,12 @@ contract LimitSwapGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -492,7 +494,11 @@ contract LimitSwapGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createLimitSwapWithFeeOrder(bool isFeeIn, bool isExactIn, bool isProgressive) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createLimitSwapWithFeeOrder(
+        bool isFeeIn,
+        bool isExactIn,
+        bool isProgressive
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         uint32 feeBps = 100; // 1%
 
         Program memory program = ProgramBuilder.init(_opcodes());
@@ -507,14 +513,12 @@ contract LimitSwapGas is Test, OpcodesDebug {
         }
 
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
             feeInstruction,
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -524,26 +528,29 @@ contract LimitSwapGas is Test, OpcodesDebug {
     }
 
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -557,27 +564,29 @@ contract LimitSwapGas is Test, OpcodesDebug {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }
@@ -587,15 +596,12 @@ contract LimitSwapGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_deadline,
-                ControlsArgsBuilder.buildDeadline(deadline)),
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(_deadline, ControlsArgsBuilder.buildDeadline(deadline)),
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -609,15 +615,12 @@ contract LimitSwapGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_salt,
-                ControlsArgsBuilder.buildSalt(salt)),
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(_salt, ControlsArgsBuilder.buildSalt(salt)),
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -626,20 +629,19 @@ contract LimitSwapGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createInvalidateBitLimitSwapOrder(bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createInvalidateBitLimitSwapOrder(
+        bool isExactIn
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         uint32 bitIndex = 42;
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_invalidateBit1D,
-                InvalidatorsArgsBuilder.buildInvalidateBit(bitIndex)),
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            program.build(_invalidateBit1D, InvalidatorsArgsBuilder.buildInvalidateBit(bitIndex)),
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -648,16 +650,16 @@ contract LimitSwapGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createLimitSwapInvalidateTokenInOrder(bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createLimitSwapInvalidateTokenInOrder(
+        bool isExactIn
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
             program.build(_invalidateTokenIn1D)
         );
 
@@ -674,19 +676,14 @@ contract LimitSwapGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_deadline,
-                ControlsArgsBuilder.buildDeadline(deadline)),
-            program.build(_salt,
-                ControlsArgsBuilder.buildSalt(salt)),
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(_deadline, ControlsArgsBuilder.buildDeadline(deadline)),
+            program.build(_salt, ControlsArgsBuilder.buildSalt(salt)),
+            program.build(
+                _staticBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
             program.build(_invalidateTokenIn1D)
         );
 

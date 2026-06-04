@@ -6,7 +6,6 @@ pragma solidity 0.8.30;
 
 import { PeggedFeesInvariants } from "../PeggedFeesInvariants.t.sol";
 
-
 /**
  * @title BalancedPoolEdgeFees
  * @notice Tests PeggedSwap + fees with balanced pool and edge case fee values
@@ -24,11 +23,11 @@ contract BalancedPoolEdgeFees is PeggedFeesInvariants {
         linearWidth = 0.8e27;
 
         // Edge case fees - near maximum allowed
-        flatFeeInBps = 0.999e9;        // 99.9% (near max)
-        flatFeeOutBps = 0.001e9;       // 0.1% (near min meaningful)
-        progressiveFeeInBps = 0.5e9;   // 50%
-        progressiveFeeOutBps = 0.5e9;  // 50%
-        protocolFeeOutBps = 0.1e9;     // 10%
+        flatFeeInBps = 0.999e9; // 99.9% (near max)
+        flatFeeOutBps = 0.001e9; // 0.1% (near min meaningful)
+        progressiveFeeInBps = 0.5e9; // 50%
+        progressiveFeeOutBps = 0.5e9; // 50%
+        protocolFeeOutBps = 0.1e9; // 10%
 
         // Standard test amounts for exactIn
         testAmounts = new uint256[](3);

@@ -91,50 +91,57 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
         uint32 flatOutFeeBps;
     }
 
-    function _createOrder(MakerSetup memory setup) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
+    function _createOrder(
+        MakerSetup memory setup
+    ) internal view returns (ISwapVM.Order memory order, bytes memory signature) {
         Program memory program = ProgramBuilder.init(_opcodes());
 
         bytes memory programBytes = bytes.concat(
             // 0. Apply dynamic protocol fee
-            program.build(Fee._dynamicProtocolFeeAmountInXD,
-                FeeArgsBuilder.buildDynamicProtocolFee(setup.dynamicFeeProvider)),
+            program.build(
+                Fee._dynamicProtocolFeeAmountInXD,
+                FeeArgsBuilder.buildDynamicProtocolFee(setup.dynamicFeeProvider)
+            ),
             // 1. Set initial token balances
-            program.build(Balances._dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([tokenA, tokenB]),
-                    dynamic([setup.balanceA, setup.balanceB])
-                )),
+            program.build(
+                Balances._dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([tokenA, tokenB]), dynamic([setup.balanceA, setup.balanceB]))
+            ),
             // 2. Apply flat feeIn (optional)
-            setup.flatInFeeBps > 0 ? program.build(Fee._flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(setup.flatInFeeBps)) : bytes(""),
+            setup.flatInFeeBps > 0
+                ? program.build(Fee._flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(setup.flatInFeeBps))
+                : bytes(""),
             // 3. Apply flat feeOut (optional)
-            setup.flatOutFeeBps > 0 ? program.build(FeeExperimental._flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(setup.flatOutFeeBps)) : bytes(""),
+            setup.flatOutFeeBps > 0
+                ? program.build(FeeExperimental._flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(setup.flatOutFeeBps))
+                : bytes(""),
             // 4. Perform the swap
             program.build(XYCSwap._xycSwapXD)
         );
 
         // === Create Order ===
-        order = MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: programBytes
-        }));
+        order = MakerTraitsLib.build(
+            MakerTraitsLib.Args({
+                maker: maker,
+                shouldUnwrapWeth: false,
+                useAquaInsteadOfSignature: false,
+                allowZeroAmountIn: false,
+                receiver: address(0),
+                hasPreTransferInHook: false,
+                hasPostTransferInHook: false,
+                hasPreTransferOutHook: false,
+                hasPostTransferOutHook: false,
+                preTransferInTarget: address(0),
+                preTransferInData: "",
+                postTransferInTarget: address(0),
+                postTransferInData: "",
+                preTransferOutTarget: address(0),
+                preTransferOutData: "",
+                postTransferOutTarget: address(0),
+                postTransferOutData: "",
+                program: programBytes
+            })
+        );
 
         bytes32 orderHash = swapVM.hash(order);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPrivateKey, orderHash);
@@ -146,53 +153,59 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
     }
 
     function _quotingTakerData(TakerSetup memory takerSetup) internal view returns (bytes memory takerData) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: taker,
-            isExactIn: takerSetup.isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: ""
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: taker,
+                    isExactIn: takerSetup.isExactIn,
+                    shouldUnwrapWeth: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: ""
+                })
+            );
     }
 
     function _swappingTakerData(bytes memory takerData, bytes memory signature) internal view returns (bytes memory) {
         bool isExactIn = (uint16(bytes2(takerData)) & 0x0001) != 0;
 
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: taker,
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: taker,
+                    isExactIn: isExactIn,
+                    shouldUnwrapWeth: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "",
+                    to: address(0),
+                    deadline: 0,
+                    hasPreTransferInCallback: false,
+                    hasPreTransferOutCallback: false,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: signature
+                })
+            );
     }
 
     // ========== Dynamic Protocol Fee Tests ==========
@@ -216,7 +229,13 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
         uint256 amountIn = 10e18;
 
         vm.prank(taker);
-        (uint256 actualAmountIn, uint256 amountOut,) = swapVM.swap(order, tokenA, tokenB, amountIn, exactInTakerDataSwap);
+        (uint256 actualAmountIn, uint256 amountOut, ) = swapVM.swap(
+            order,
+            tokenA,
+            tokenB,
+            amountIn,
+            exactInTakerDataSwap
+        );
 
         // Protocol fee is collected from tokenIn (tokenA)
         uint256 actualProtocolFee = TokenMock(tokenA).balanceOf(protocolFeeRecipient);
@@ -228,7 +247,7 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
         assertLt(actualAmountIn, amountIn, "actualAmountIn should be less than requested (after fee)");
 
         // Verify amountOut is less than without fee
-        uint256 noFeeAmountOut = setup.balanceB * amountIn / (setup.balanceA + amountIn);
+        uint256 noFeeAmountOut = (setup.balanceB * amountIn) / (setup.balanceA + amountIn);
         assertLt(amountOut, noFeeAmountOut, "AmountOut should be less with protocol fee on amountIn");
     }
 
@@ -250,16 +269,27 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
 
         uint256 amountOut = 50e18;
         vm.prank(taker);
-        (uint256 actualAmountIn, uint256 actualAmountOut,) = swapVM.swap(order, tokenA, tokenB, amountOut, exactOutTakerDataSwap);
+        (uint256 actualAmountIn, uint256 actualAmountOut, ) = swapVM.swap(
+            order,
+            tokenA,
+            tokenB,
+            amountOut,
+            exactOutTakerDataSwap
+        );
 
         uint256 actualProtocolFee = TokenMock(tokenA).balanceOf(protocolFeeRecipient);
 
         // Calculate expected values
-        uint256 baseAmountIn = setup.balanceA * amountOut / (setup.balanceB - amountOut);
-        uint256 expectedProtocolFee = baseAmountIn * 0.10e9 / (BPS - 0.10e9);
+        uint256 baseAmountIn = (setup.balanceA * amountOut) / (setup.balanceB - amountOut);
+        uint256 expectedProtocolFee = (baseAmountIn * 0.10e9) / (BPS - 0.10e9);
         uint256 expectedTotalAmountIn = baseAmountIn + expectedProtocolFee;
 
-        assertApproxEqAbs(actualProtocolFee, expectedProtocolFee, 1, "Protocol fee recipient should receive correct fee from tokenIn");
+        assertApproxEqAbs(
+            actualProtocolFee,
+            expectedProtocolFee,
+            1,
+            "Protocol fee recipient should receive correct fee from tokenIn"
+        );
         assertApproxEqAbs(actualAmountIn, expectedTotalAmountIn, 1, "Taker should pay amountIn plus protocol fee");
         assertEq(actualAmountOut, amountOut, "AmountOut should match requested amount");
     }
@@ -370,7 +400,7 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
         uint256 amountIn = 10e18;
 
         vm.prank(taker);
-        (, uint256 amountOut,) = swapVM.swap(order, tokenA, tokenB, amountIn, exactInTakerDataSwap);
+        (, uint256 amountOut, ) = swapVM.swap(order, tokenA, tokenB, amountIn, exactInTakerDataSwap);
 
         // No fee should be transferred to protocol fee recipient
         uint256 actualProtocolFee = TokenMock(tokenA).balanceOf(protocolFeeRecipient);
@@ -388,7 +418,7 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
             balanceA: 100e18,
             balanceB: 200e18,
             dynamicFeeProvider: address(feeProvider),
-            flatInFeeBps: 0.05e9,  // 5% flat fee
+            flatInFeeBps: 0.05e9, // 5% flat fee
             flatOutFeeBps: 0
         });
         (ISwapVM.Order memory order, bytes memory signature) = _createOrder(setup);
@@ -398,14 +428,14 @@ contract DynamicProtocolFeeTest is Test, OpcodesDebug {
 
         uint256 amountIn = 10e18;
         vm.prank(taker);
-        (, uint256 amountOut,) = swapVM.swap(order, tokenA, tokenB, amountIn, exactInTakerDataSwap);
+        (, uint256 amountOut, ) = swapVM.swap(order, tokenA, tokenB, amountIn, exactInTakerDataSwap);
 
         // Both fees applied - verify protocol fee was collected
         uint256 protocolFee = TokenMock(tokenA).balanceOf(protocolFeeRecipient);
         assertGt(protocolFee, 0, "Protocol fee should be collected");
 
         // Verify amountOut is less than with no fees
-        uint256 noFeeAmountOut = setup.balanceB * amountIn / (setup.balanceA + amountIn);
+        uint256 noFeeAmountOut = (setup.balanceB * amountIn) / (setup.balanceA + amountIn);
         assertLt(amountOut, noFeeAmountOut, "AmountOut should be less with both fees applied");
     }
 

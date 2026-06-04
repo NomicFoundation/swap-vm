@@ -12,7 +12,7 @@ contract TinyLiquidity is PeggedFeesInvariants {
         super.setUp();
 
         // Small pool (not too tiny to avoid sqrt precision issues)
-        balanceA = 1e18;   // 1 token
+        balanceA = 1e18; // 1 token
         balanceB = 1e18;
         x0 = 1e18;
         y0 = 1e18;
@@ -20,9 +20,9 @@ contract TinyLiquidity is PeggedFeesInvariants {
 
         // Proportionally small amounts
         testAmounts = new uint256[](3);
-        testAmounts[0] = 0.01e18;   // 1% of pool
-        testAmounts[1] = 0.05e18;   // 5% of pool
-        testAmounts[2] = 0.1e18;    // 10% of pool
+        testAmounts[0] = 0.01e18; // 1% of pool
+        testAmounts[1] = 0.05e18; // 5% of pool
+        testAmounts[2] = 0.1e18; // 10% of pool
 
         flatFeeInBps = 0.003e9;
         flatFeeOutBps = 0.003e9;

@@ -51,10 +51,8 @@ contract FeeExperimental is Fee {
             // Formula: dx_eff = dx / (1 + λ * dx / x)
             // Rearranged for precision: dx_eff = (dx * BPS * x) / (BPS * x + λ * dx)
             uint256 takerDefinedAmountIn = ctx.swap.amountIn;
-            ctx.swap.amountIn = (
-                (BPS * ctx.swap.amountIn * ctx.swap.balanceIn) /
-                (BPS * ctx.swap.balanceIn + feeBps * ctx.swap.amountIn)
-            );
+            ctx.swap.amountIn = ((BPS * ctx.swap.amountIn * ctx.swap.balanceIn) /
+                (BPS * ctx.swap.balanceIn + feeBps * ctx.swap.amountIn));
             ctx.runLoop();
             ctx.swap.amountIn = takerDefinedAmountIn;
         } else {
@@ -80,10 +78,8 @@ contract FeeExperimental is Fee {
             // Decrease amountOut by fee after swap-instruction
             // Formula: dy_eff = dy / (1 + λ * dy / y)
             // Rearranged for precision: dy_eff = (dy * BPS * y) / (BPS * y + λ * dy)
-            ctx.swap.amountOut = (
-                (BPS * ctx.swap.amountOut * ctx.swap.balanceOut) /
-                (BPS * ctx.swap.balanceOut + feeBps * ctx.swap.amountOut)
-            );
+            ctx.swap.amountOut = ((BPS * ctx.swap.amountOut * ctx.swap.balanceOut) /
+                (BPS * ctx.swap.balanceOut + feeBps * ctx.swap.amountOut));
         } else {
             // Decrease amountOut by fee only during swap-instruction
             // Formula: dy = dy_eff / (1 - λ * dy_eff / y)
@@ -136,12 +132,12 @@ contract FeeExperimental is Fee {
         if (ctx.query.isExactIn) {
             // Decrease amountOut by fee after passing to swap-instruction
             ctx.runLoop();
-            feeAmountOut = ctx.swap.amountOut * feeBps / BPS;
+            feeAmountOut = (ctx.swap.amountOut * feeBps) / BPS;
             ctx.swap.amountOut -= feeAmountOut;
         } else {
             // Increase amountOut by fee only during swap-instruction
             uint256 takerDefinedAmountOut = ctx.swap.amountOut;
-            feeAmountOut = ctx.swap.amountOut * feeBps / (BPS - feeBps);
+            feeAmountOut = (ctx.swap.amountOut * feeBps) / (BPS - feeBps);
             ctx.swap.amountOut += feeAmountOut;
             ctx.runLoop();
             ctx.swap.amountOut = takerDefinedAmountOut;

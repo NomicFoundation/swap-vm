@@ -73,29 +73,22 @@ contract MinRateTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(200e18)])
-                )),
-            program.build(_requireMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_requireMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
         // Should succeed - rate is 2:1 which doesn't exceed the max 1:2.2
-        uint256 amountOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        uint256 amountOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
 
         assertEq(amountOut, 2e18, "Should get base rate output");
     }
@@ -111,15 +104,15 @@ contract MinRateTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(200e18)])
-                )),
-            program.build(_requireMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_requireMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -130,13 +123,7 @@ contract MinRateTest is Test, OpcodesDebug {
 
         // Should revert - rate is 2:1 which exceeds the max 1:1.5
         vm.expectRevert();
-        swapVM.swap(
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        swapVM.swap(order, address(tokenA), address(tokenB), 1e18, exactInData);
     }
 
     /**
@@ -150,29 +137,22 @@ contract MinRateTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(300e18)])
-                )),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
         // Execute swap - output should be capped to protect maker
-        uint256 amountOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        uint256 amountOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
 
         assertEq(amountOut, 2e18, "Should cap output at min rate");
     }
@@ -188,28 +168,22 @@ contract MinRateTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(300e18)])
-                )),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactOutData = _signAndPackTakerData(order, false, 10e18); // Want 10 tokenB
 
         // Quote required input
-        (uint256 quotedIn,,) = swapVM.asView().quote(
-            order,
-            address(tokenA),
-            address(tokenB),
-            10e18,
-            exactOutData
-        );
+        (uint256 quotedIn, , ) = swapVM.asView().quote(order, address(tokenA), address(tokenB), 10e18, exactOutData);
 
         // Should require more input due to min rate cap
         assertEq(quotedIn, 5e18, "Should require exactly 5 tokenA for 10 tokenB");
@@ -228,30 +202,22 @@ contract MinRateTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(200e18)])
-                )),
-            program.build(_flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
-        uint256 amountOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        uint256 amountOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
 
         // Should get capped rate after fees
         // Base would give 2e18, minus 1% fee = 1.98e18
@@ -270,28 +236,21 @@ contract MinRateTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(150e18)])
-                )),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
-        uint256 amountOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        uint256 amountOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
 
         // Should get base rate (1.5:1) as it's worse than min rate (2:1)
         assertEq(amountOut, 1.5e18, "Should get base rate when worse than min");
@@ -311,15 +270,18 @@ contract MinRateTest is Test, OpcodesDebug {
         // This equals the min rate, so no adjustment
         Program memory programAtoB = ProgramBuilder.init(_opcodes());
         bytes memory bytecodeAtoB = bytes.concat(
-            programAtoB.build(_staticBalancesXD,
+            programAtoB.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(200e18), uint256(100e18)])
-                )),
-            programAtoB.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            programAtoB.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            programAtoB.build(
+                _adjustMinRate1D,
+                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)
+            ),
+            programAtoB.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory orderAtoB = _createOrder(bytecodeAtoB);
@@ -341,15 +303,18 @@ contract MinRateTest is Test, OpcodesDebug {
         // This equals the inverse of min rate, so no adjustment
         Program memory programBtoA = ProgramBuilder.init(_opcodes());
         bytes memory bytecodeBtoA = bytes.concat(
-            programBtoA.build(_staticBalancesXD,
+            programBtoA.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(200e18), uint256(100e18)])
-                )),
-            programBtoA.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            programBtoA.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenB), address(tokenA)))
+                )
+            ),
+            programBtoA.build(
+                _adjustMinRate1D,
+                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)
+            ),
+            programBtoA.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenB), address(tokenA)))
         );
 
         ISwapVM.Order memory orderBtoA = _createOrder(bytecodeBtoA);
@@ -378,28 +343,21 @@ contract MinRateTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(1000000e18)])
-                )),
-            program.build(_adjustMinRate1D,
-                MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_adjustMinRate1D, MinRateArgsBuilder.build(address(tokenA), address(tokenB), rateA, rateB)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
-        uint256 amountOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            1e18,
-            exactInData
-        );
+        uint256 amountOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 1e18, exactInData);
 
         // Should be capped at min rate
         assertEq(amountOut, 1000e18, "Should cap at extreme min rate");
@@ -418,13 +376,7 @@ contract MinRateTest is Test, OpcodesDebug {
         TokenMock(tokenIn).mint(taker, amount);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         // Verify the swap consumed the expected input amount
         require(actualIn == amount, "Unexpected input amount consumed");
@@ -433,26 +385,29 @@ contract MinRateTest is Test, OpcodesDebug {
     }
 
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -466,27 +421,29 @@ contract MinRateTest is Test, OpcodesDebug {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

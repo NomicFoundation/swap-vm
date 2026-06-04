@@ -10,7 +10,6 @@ import { AquaSwapVMTest } from "./base/AquaSwapVMTest.sol";
 
 import { ISwapVM } from "../src/interfaces/ISwapVM.sol";
 
-
 import { BPS } from "../src/instructions/Fee.sol";
 import { ContextLib } from "../src/libs/VM.sol";
 import { TakerTraitsLib } from "../src/libs/TakerTraits.sol";
@@ -22,39 +21,34 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         super.setUp();
     }
 
-    function _makerSetup(
-        uint256 balanceA,
-        uint256 balanceB
-    ) internal pure returns (MakerSetup memory) {
-        return MakerSetup({
-            balanceA: balanceA,
-            balanceB: balanceB,
-            priceMin: 0,
-            priceMax: 0,
-            protocolFeeBps: 0,
-            feeInBps: 0,
-            protocolFeeRecipient: address(0),
-            swapType: SwapType.XYC
-        });
+    function _makerSetup(uint256 balanceA, uint256 balanceB) internal pure returns (MakerSetup memory) {
+        return
+            MakerSetup({
+                balanceA: balanceA,
+                balanceB: balanceB,
+                priceMin: 0,
+                priceMax: 0,
+                protocolFeeBps: 0,
+                feeInBps: 0,
+                protocolFeeRecipient: address(0),
+                swapType: SwapType.XYC
+            });
     }
 
     function _makerSetup() internal pure returns (MakerSetup memory) {
         return _makerSetup(INITIAL_BALANCE_A, INITIAL_BALANCE_B);
     }
 
-    function _swapProgram(
-        uint256 amount,
-        bool zeroForOne,
-        bool isExactIn
-    ) internal view returns (SwapProgram memory) {
-        return SwapProgram({
-            amount: amount,
-            taker: taker,
-            tokenA: tokenA,
-            tokenB: tokenB,
-            zeroForOne: zeroForOne,
-            isExactIn: isExactIn
-        });
+    function _swapProgram(uint256 amount, bool zeroForOne, bool isExactIn) internal view returns (SwapProgram memory) {
+        return
+            SwapProgram({
+                amount: amount,
+                taker: taker,
+                tokenA: tokenA,
+                tokenB: tokenB,
+                zeroForOne: zeroForOne,
+                isExactIn: isExactIn
+            });
     }
 
     // ============================================
@@ -80,7 +74,7 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         (uint256 makerBalanceAAfter, uint256 makerBalanceBAfter) = getAquaBalances(strategyHash);
         (uint256 takerBalanceAAfter, uint256 takerBalanceBAfter) = getTakerBalances(swapProgram.taker);
 
-        uint256 amountOutExpected = setup.balanceB * amountIn / (setup.balanceA + amountIn);
+        uint256 amountOutExpected = (setup.balanceB * amountIn) / (setup.balanceA + amountIn);
         assertEq(takerBalanceBAfter - takerBalanceBBefore, amountOutExpected, "Taker received correct amountOut");
         assertEq(makerBalanceAAfter, makerBalanceABefore + amountIn, "Maker balance A should increase by amountIn");
         assertEq(makerBalanceBAfter, makerBalanceBBefore - amountOut, "Maker balance B should decrease by amountOut");
@@ -105,7 +99,7 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         (uint256 makerBalanceAAfter, uint256 makerBalanceBAfter) = getAquaBalances(strategyHash);
         (uint256 takerBalanceAAfter, uint256 takerBalanceBAfter) = getTakerBalances(swapProgram.taker);
 
-        uint256 amountInExpected = setup.balanceA * amountOut / (setup.balanceB - amountOut);
+        uint256 amountInExpected = (setup.balanceA * amountOut) / (setup.balanceB - amountOut);
         assertApproxEqAbs(takerBalanceABefore - takerBalanceAAfter, amountInExpected, 1, "Taker paid correct amountIn");
         assertEq(makerBalanceAAfter, makerBalanceABefore + amountIn, "Maker balance A should increase by amountIn");
         assertEq(makerBalanceBAfter, makerBalanceBBefore - amountOut, "Maker balance B should decrease by amountOut");
@@ -167,7 +161,7 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         (uint256 balanceATakerBefore, uint256 balanceBTakerBefore) = getTakerBalances(swapProgramOut.taker);
 
         mintTokenOutToMaker(swapProgramOut, 200e18);
-        (uint256 amountIn,) = swap(swapProgramOut, order);
+        (uint256 amountIn, ) = swap(swapProgramOut, order);
 
         mintTokenOutToMaker(swapProgramIn, amountIn);
         swap(swapProgramIn, order);
@@ -179,7 +173,11 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
 
         // Taker should get less or the same amount out due to rounding in XYC (floor)
         (uint256 balanceATakerAfter, uint256 balanceBTakerAfter) = getTakerBalances(swapProgramOut.taker);
-        assertGe(balanceATakerBefore, balanceATakerAfter, "Taker should get less or the same amount out due to rounding");
+        assertGe(
+            balanceATakerBefore,
+            balanceATakerAfter,
+            "Taker should get less or the same amount out due to rounding"
+        );
         assertEq(balanceBTakerBefore, balanceBTakerAfter, "Taker balance B should be consistent after round-trip swap");
     }
 
@@ -209,7 +207,11 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
 
         // Taker should get less or the same amount out due to rounding in XYC (floor)
         (uint256 balanceATakerAfter, uint256 balanceBTakerAfter) = getTakerBalances(swapProgram.taker);
-        assertGe(balanceATakerBefore, balanceATakerAfter, "Taker should get less or the same amount out due to rounding");
+        assertGe(
+            balanceATakerBefore,
+            balanceATakerAfter,
+            "Taker should get less or the same amount out due to rounding"
+        );
         assertEq(balanceBTakerBefore, balanceBTakerAfter, "Taker balance B should be consistent after round-trip swap");
     }
 
@@ -225,7 +227,7 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         (uint256 balanceATakerBefore, uint256 balanceBTakerBefore) = getTakerBalances(swapProgram.taker);
 
         mintTokenOutToMaker(swapProgram, 200e18);
-        (uint256 amountIn,) = swap(swapProgram, order);
+        (uint256 amountIn, ) = swap(swapProgram, order);
 
         swapProgram.zeroForOne = false; // Reverse direction
         swapProgram.amount = amountIn; // Set exact in amount
@@ -241,7 +243,11 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         // Taker should get less or the same amount out due to rounding in XYC (ceiling)
         // We added 1 wei to cover the ceiling division case so the taker should at best break even
         (uint256 balanceATakerAfter, uint256 balanceBTakerAfter) = getTakerBalances(swapProgram.taker);
-        assertEq(balanceATakerBefore, balanceATakerAfter, "Taker should get less or the same amount out due to rounding");
+        assertEq(
+            balanceATakerBefore,
+            balanceATakerAfter,
+            "Taker should get less or the same amount out due to rounding"
+        );
         assertEq(balanceBTakerBefore, balanceBTakerAfter, "Taker balance B should be consistent after round-trip swap");
     }
 
@@ -272,9 +278,13 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
             // Expect revert because amountIn/amountOut equal zero due to dust trade
             // e.g. trying to swap 1 unit when balances are in millions
             if (isExactIn) {
-                vm.expectRevert(abi.encodeWithSelector(TakerTraitsLib.TakerTraitsAmountOutMustBeGreaterThanZero.selector, 0));
+                vm.expectRevert(
+                    abi.encodeWithSelector(TakerTraitsLib.TakerTraitsAmountOutMustBeGreaterThanZero.selector, 0)
+                );
             } else {
-                vm.expectRevert(abi.encodeWithSelector(TakerTraitsLib.TakerTraitsAmountOutMustBeGreaterThanZero.selector, 0));
+                vm.expectRevert(
+                    abi.encodeWithSelector(TakerTraitsLib.TakerTraitsAmountOutMustBeGreaterThanZero.selector, 0)
+                );
             }
             swap(swapProgram, order);
             return (invariantBefore, invariantBefore); // Return same invariant on revert
@@ -288,38 +298,68 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
 
     function test_Aqua_XYC_Dust_ExactIn_KInvariant() public {
         (uint256 invariantBefore, uint256 invariantAfter) = _checkInvariantNeverDecreases(
-            INITIAL_BALANCE_A, INITIAL_BALANCE_B, DUST_AMOUNT, true, false);
+            INITIAL_BALANCE_A,
+            INITIAL_BALANCE_B,
+            DUST_AMOUNT,
+            true,
+            false
+        );
         assertGe(invariantAfter, invariantBefore, "Invariant should not decrease for dust amount exact in");
     }
 
     function test_Aqua_XYC_Dust_ExactOut_KInvariant() public {
         (uint256 invariantBefore, uint256 invariantAfter) = _checkInvariantNeverDecreases(
-            INITIAL_BALANCE_A, INITIAL_BALANCE_B, DUST_AMOUNT, false, false);
+            INITIAL_BALANCE_A,
+            INITIAL_BALANCE_B,
+            DUST_AMOUNT,
+            false,
+            false
+        );
         assertGe(invariantAfter, invariantBefore, "Invariant should not decrease for dust amount exact out");
     }
 
     function test_Aqua_XYC_Dust_ExactIn_KInvariant_Balanced() public {
         (uint256 invariantBefore, uint256 invariantAfter) = _checkInvariantNeverDecreases(
-            INITIAL_BALANCE_A, INITIAL_BALANCE_A, DUST_AMOUNT, true, true);
+            INITIAL_BALANCE_A,
+            INITIAL_BALANCE_A,
+            DUST_AMOUNT,
+            true,
+            true
+        );
         assertGe(invariantAfter, invariantBefore, "Invariant should not decrease for dust amount exact in balanced");
     }
 
     function test_Aqua_XYC_Dust_ExactOut_KInvariant_Balanced() public {
         (uint256 invariantBefore, uint256 invariantAfter) = _checkInvariantNeverDecreases(
-            INITIAL_BALANCE_A, INITIAL_BALANCE_A, DUST_AMOUNT, false, false);
+            INITIAL_BALANCE_A,
+            INITIAL_BALANCE_A,
+            DUST_AMOUNT,
+            false,
+            false
+        );
         assertGe(invariantAfter, invariantBefore, "Invariant should not decrease for dust amount exact out balanced");
     }
 
     function test_Aqua_XYC_MaxAmount_ExactIn_KInvariant() public {
         (uint256 invariantBefore, uint256 invariantAfter) = _checkInvariantNeverDecreases(
-            MAX_REASONABLE_BALANCE, MAX_REASONABLE_BALANCE, MAX_REASONABLE_AMOUNT, true, false);
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_AMOUNT,
+            true,
+            false
+        );
         assertGe(invariantAfter, invariantBefore, "Invariant should not decrease for max reasonable amount exact in");
     }
 
     function test_Aqua_XYC_MaxAmount_ExactOut_KInvariant() public {
         // MAX_REASONABLE_AMOUNT >> 8 is used to test the edge case because Aqua supports only uint248 max amount
         (uint256 invariantBefore, uint256 invariantAfter) = _checkInvariantNeverDecreases(
-            MAX_REASONABLE_BALANCE, MAX_REASONABLE_BALANCE, MAX_REASONABLE_AMOUNT >> 8, false, false);
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_AMOUNT >> 8,
+            false,
+            false
+        );
         assertGe(invariantAfter, invariantBefore, "Invariant should not decrease for max reasonable amount exact out");
     }
 
@@ -350,27 +390,51 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
 
     function test_Aqua_XYC_Dust_ExactIn_SwapRateVsSpot() public {
         (uint256 spotPrice, uint256 effectivePrice) = _checkSwapRateAlwaysWorseOrEqualToSpotPrice(
-            INITIAL_BALANCE_A, INITIAL_BALANCE_B, DUST_AMOUNT, true);
+            INITIAL_BALANCE_A,
+            INITIAL_BALANCE_B,
+            DUST_AMOUNT,
+            true
+        );
         assertGe(spotPrice, effectivePrice, "Effective price should be worse or equal to spot price for exact in");
     }
 
     function test_Aqua_XYC_Dust_ExactOut_SwapRateVsSpot() public {
         (uint256 spotPrice, uint256 effectivePrice) = _checkSwapRateAlwaysWorseOrEqualToSpotPrice(
-            INITIAL_BALANCE_A, INITIAL_BALANCE_B, DUST_AMOUNT, false);
+            INITIAL_BALANCE_A,
+            INITIAL_BALANCE_B,
+            DUST_AMOUNT,
+            false
+        );
         assertGe(spotPrice, effectivePrice, "Effective price should be worse or equal to spot price for exact out");
     }
 
     function test_Aqua_XYC_MaxAmount_ExactIn_SwapRateVsSpot() public {
         (uint256 spotPrice, uint256 effectivePrice) = _checkSwapRateAlwaysWorseOrEqualToSpotPrice(
-            MAX_REASONABLE_BALANCE, MAX_REASONABLE_BALANCE, MAX_REASONABLE_AMOUNT, true);
-        assertGe(spotPrice, effectivePrice, "Effective price should be worse or equal to spot price for exact in max reasonable amount");
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_AMOUNT,
+            true
+        );
+        assertGe(
+            spotPrice,
+            effectivePrice,
+            "Effective price should be worse or equal to spot price for exact in max reasonable amount"
+        );
     }
 
     function test_Aqua_XYC_MaxAmount_ExactOut_SwapRateVsSpot() public {
         // MAX_REASONABLE_AMOUNT >> 8 is used to test the edge case because Aqua supports only uint248 max amount
         (uint256 spotPrice, uint256 effectivePrice) = _checkSwapRateAlwaysWorseOrEqualToSpotPrice(
-            MAX_REASONABLE_BALANCE, MAX_REASONABLE_BALANCE, MAX_REASONABLE_AMOUNT >> 8, false);
-        assertGe(spotPrice, effectivePrice, "Effective price should be worse or equal to spot price for exact out max reasonable amount");
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_BALANCE,
+            MAX_REASONABLE_AMOUNT >> 8,
+            false
+        );
+        assertGe(
+            spotPrice,
+            effectivePrice,
+            "Effective price should be worse or equal to spot price for exact out max reasonable amount"
+        );
     }
 
     // ============================================
@@ -392,7 +456,7 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         swap(swapProgram, order); // Expect revert due to dust trade and flooring to 0
 
         swapProgram.isExactIn = false; // Change to exact out
-        (uint256 amountIn,) = swap(swapProgram, order); // Should succeed
+        (uint256 amountIn, ) = swap(swapProgram, order); // Should succeed
         assertGe(amountIn, swapProgram.amount, "Rounding should favor strategy on exact out swap");
     }
 
@@ -413,7 +477,7 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         uint256 cumulativeAmountOut = 0;
         for (uint256 i = 0; i < splitCount; i++) {
             swapProgram.amount = splitAmountIn;
-            ( , uint256 amountOut) = swap(swapProgram, strategy);
+            (, uint256 amountOut) = swap(swapProgram, strategy);
             cumulativeAmountOut += amountOut;
         }
 
@@ -422,8 +486,12 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         shipStrategy(strategy, tokenA, tokenB, setup.balanceA, setup.balanceB);
         swapProgram.amount = totalAmountIn;
 
-        ( , uint256 singleAmountOut) = swap(swapProgram, strategy);
-        assertGe(singleAmountOut, cumulativeAmountOut, "Single swap should yield equal or more amount out than split swaps");
+        (, uint256 singleAmountOut) = swap(swapProgram, strategy);
+        assertGe(
+            singleAmountOut,
+            cumulativeAmountOut,
+            "Single swap should yield equal or more amount out than split swaps"
+        );
     }
 
     function test_Aqua_XYC_ExactOut_SingleBeatsSplit() public {
@@ -453,7 +521,11 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         swapProgram.amount = totalAmountOut;
 
         (uint256 singleAmountIn, ) = swap(swapProgram, strategy);
-        assertLe(singleAmountIn, cumulativeAmountIn, "Single swap should require equal or less amount in than split swaps");
+        assertLe(
+            singleAmountIn,
+            cumulativeAmountIn,
+            "Single swap should require equal or less amount in than split swaps"
+        );
     }
 
     function test_Aqua_XYC_ExactIn_PriceImpactGrows() public {
@@ -471,26 +543,38 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         // isolate small swap
         ISwapVM.Order memory strategy = createStrategy(setup);
         shipStrategy(strategy, tokenA, tokenB, setup.balanceA, setup.balanceB);
-        ( , uint256 smallAmountOut) = swap(swapProgram, strategy);
+        (, uint256 smallAmountOut) = swap(swapProgram, strategy);
         uint256 smallEffectivePrice = (smallAmountOut * ONE) / smallSwapAmountIn;
 
         // isolate medium swap
         strategy = createStrategy(setup);
         shipStrategy(strategy, tokenA, tokenB, setup.balanceA, setup.balanceB);
         swapProgram.amount = mediumSwapAmountIn;
-        ( , uint256 mediumAmountOut) = swap(swapProgram, strategy);
+        (, uint256 mediumAmountOut) = swap(swapProgram, strategy);
         uint256 mediumEffectivePrice = (mediumAmountOut * ONE) / mediumSwapAmountIn;
 
         // isolate large swap
         strategy = createStrategy(setup);
         shipStrategy(strategy, tokenA, tokenB, setup.balanceA, setup.balanceB);
         swapProgram.amount = largeSwapAmountIn;
-        ( , uint256 largeAmountOut) = swap(swapProgram, strategy);
+        (, uint256 largeAmountOut) = swap(swapProgram, strategy);
         uint256 largeEffectivePrice = (largeAmountOut * ONE) / largeSwapAmountIn;
 
-        assertLt(largeEffectivePrice, smallEffectivePrice, "Larger swap should have worse effective price due to price impact");
-        assertLt(mediumEffectivePrice, smallEffectivePrice, "Medium swap should have worse effective price than small swap due to price impact");
-        assertLt(largeEffectivePrice, mediumEffectivePrice, "Large swap should have worse effective price than medium swap due to price impact");
+        assertLt(
+            largeEffectivePrice,
+            smallEffectivePrice,
+            "Larger swap should have worse effective price due to price impact"
+        );
+        assertLt(
+            mediumEffectivePrice,
+            smallEffectivePrice,
+            "Medium swap should have worse effective price than small swap due to price impact"
+        );
+        assertLt(
+            largeEffectivePrice,
+            mediumEffectivePrice,
+            "Large swap should have worse effective price than medium swap due to price impact"
+        );
     }
 
     function test_Aqua_XYC_ExactOut_PriceImpactGrows() public {
@@ -525,9 +609,21 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         (uint256 largeAmountIn, ) = swap(swapProgram, strategy);
         uint256 largeEffectivePrice = (largeSwapAmountOut * ONE) / largeAmountIn;
 
-        assertLe(largeEffectivePrice, smallEffectivePrice, "Larger swap should have worse effective price due to price impact");
-        assertLe(mediumEffectivePrice, smallEffectivePrice, "Medium swap should have worse effective price than small swap due to price impact");
-        assertLe(largeEffectivePrice, mediumEffectivePrice, "Large swap should have worse effective price than medium swap due to price impact");
+        assertLe(
+            largeEffectivePrice,
+            smallEffectivePrice,
+            "Larger swap should have worse effective price due to price impact"
+        );
+        assertLe(
+            mediumEffectivePrice,
+            smallEffectivePrice,
+            "Medium swap should have worse effective price than small swap due to price impact"
+        );
+        assertLe(
+            largeEffectivePrice,
+            mediumEffectivePrice,
+            "Large swap should have worse effective price than medium swap due to price impact"
+        );
     }
 
     // ============================================
@@ -555,7 +651,11 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
         }
 
         (uint256 balanceAAfter, uint256 balanceBAfter) = getAquaBalances(strategyHash);
-        assertEq(balanceAAfter - balanceABefore, iterations * DUST_AMOUNT, "Total amount in should equal iterations times dust amount");
+        assertEq(
+            balanceAAfter - balanceABefore,
+            iterations * DUST_AMOUNT,
+            "Total amount in should equal iterations times dust amount"
+        );
         assertGt(balanceBBefore - balanceBAfter, 0, "Total amount out should be greater than zero");
     }
 
@@ -579,7 +679,11 @@ contract XYCSwapAquaTest is AquaSwapVMTest {
 
         (uint256 balanceAAfter, uint256 balanceBAfter) = getAquaBalances(strategyHash);
         assertGt(balanceAAfter - balanceABefore, 0, "Total amount out should be greater than zero");
-        assertEq(balanceBBefore - balanceBAfter, iterations * DUST_AMOUNT, "Total amount in should equal iterations times dust amount");
+        assertEq(
+            balanceBBefore - balanceBAfter,
+            iterations * DUST_AMOUNT,
+            "Total amount in should equal iterations times dust amount"
+        );
     }
 
     // ============================================

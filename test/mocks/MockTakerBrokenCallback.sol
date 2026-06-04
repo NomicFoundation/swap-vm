@@ -13,11 +13,11 @@ import { SwapVM, ISwapVM } from "../../src/SwapVM.sol";
 /// @dev Mock taker that can be configured to have broken callback behavior for testing
 contract MockTakerBrokenCallback is ITakerCallbacks {
     enum CallbackBehavior {
-        Normal,           // Push correct amount to Aqua
-        NoPush,           // Don't push anything
+        Normal, // Push correct amount to Aqua
+        NoPush, // Don't push anything
         InsufficientPush, // Push less than required
-        WrongOrderHash,   // Push to wrong orderHash
-        WrongToken        // Push wrong token
+        WrongOrderHash, // Push to wrong orderHash
+        WrongToken // Push wrong token
     }
 
     Aqua public immutable AQUA;
@@ -59,13 +59,7 @@ contract MockTakerBrokenCallback is ITakerCallbacks {
         uint256 amount,
         bytes calldata takerTraitsAndData
     ) public onlyOwner returns (uint256 amountIn, uint256 amountOut) {
-        (amountIn, amountOut,) = SWAPVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerTraitsAndData
-        );
+        (amountIn, amountOut, ) = SWAPVM.swap(order, tokenIn, tokenOut, amount, takerTraitsAndData);
     }
 
     function preTransferInCallback(

@@ -111,7 +111,7 @@ contract TWAPSwap is LimitSwap {
 
         // Calculate available liquidity (linear unlocking)
         uint256 durationPassed = Math.min(block.timestamp - args.startTime, args.duration);
-        uint256 unlocked = args.balanceOut * durationPassed / args.duration;
+        uint256 unlocked = (args.balanceOut * durationPassed) / args.duration;
 
         LastSwap memory lastSwap = twapLastSwaps[ctx.query.orderHash];
         uint256 sold = lastSwap.totalSold; // Use cumulative sold from storage
@@ -130,18 +130,18 @@ contract TWAPSwap is LimitSwap {
 
             // Check for illiquidity period (only relevant during TWAP duration)
             if (durationPassed < args.duration) {
-                uint256 lastSwapAvailable = args.balanceOut * (auctionStartTime - args.startTime) / args.duration;
+                uint256 lastSwapAvailable = (args.balanceOut * (auctionStartTime - args.startTime)) / args.duration;
 
                 (bool wasIlliquid, uint256 illiquidity0) = (args.minTradeAmountOut + sold).trySub(lastSwapAvailable);
                 if (wasIlliquid) {
                     // Calculate illiquidity duration and max illiquidity duration
-                    uint256 illiquidityDuration = illiquidity0 * args.duration / args.balanceOut;
-                    uint256 maxIlliquidityDuration = args.minTradeAmountOut * args.duration / args.balanceOut;
+                    uint256 illiquidityDuration = (illiquidity0 * args.duration) / args.balanceOut;
+                    uint256 maxIlliquidityDuration = (args.minTradeAmountOut * args.duration) / args.balanceOut;
 
                     // Apply proportional price bump
-                    uint256 bumpRatio = Math.min(1e18, illiquidityDuration * 1e18 / maxIlliquidityDuration);
-                    uint256 scaledBump = 1e18 + (args.priceBumpAfterIlliquidity - 1e18) * bumpRatio / 1e18;
-                    baseAmountIn = baseAmountIn * scaledBump / 1e18;
+                    uint256 bumpRatio = Math.min(1e18, (illiquidityDuration * 1e18) / maxIlliquidityDuration);
+                    uint256 scaledBump = 1e18 + ((args.priceBumpAfterIlliquidity - 1e18) * bumpRatio) / 1e18;
+                    baseAmountIn = (baseAmountIn * scaledBump) / 1e18;
 
                     // Adjust auction start time
                     auctionStartTime += illiquidityDuration;
@@ -151,12 +151,15 @@ contract TWAPSwap is LimitSwap {
 
         uint256 decay = uint256(0.9999e18).pow(block.timestamp - auctionStartTime, 1e18);
         ctx.swap.balanceIn = baseAmountIn;
-        ctx.swap.balanceOut = baseAmountOut * decay / 1e18;
+        ctx.swap.balanceOut = (baseAmountOut * decay) / 1e18;
 
         ctx.runLoop(); // Reuse LimitSwap logic for final amount calculation
 
         // Check minimum trade amount (only during TWAP duration) and available liquidity
-        require(durationPassed >= args.duration || ctx.swap.amountOut >= args.minTradeAmountOut, TWAPSwapMinTradeAmountNotReached(ctx.swap.amountOut, args.minTradeAmountOut));
+        require(
+            durationPassed >= args.duration || ctx.swap.amountOut >= args.minTradeAmountOut,
+            TWAPSwapMinTradeAmountNotReached(ctx.swap.amountOut, args.minTradeAmountOut)
+        );
         require(ctx.swap.amountOut <= available, TWAPSwapTradeAmountExceedLiquidity(ctx.swap.amountOut, available));
 
         // Store trade data

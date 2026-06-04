@@ -14,7 +14,9 @@ import { Context } from "../libs/VM.sol";
 contract Debug {
     using CalldataPtrLib for CalldataPtr;
 
-    function _injectDebugOpcodes(function(Context memory, bytes calldata) internal[] memory opcodes) internal pure returns (function(Context memory, bytes calldata) internal[] memory) {
+    function _injectDebugOpcodes(
+        function(Context memory, bytes calldata) internal[] memory opcodes
+    ) internal pure returns (function(Context memory, bytes calldata) internal[] memory) {
         opcodes[0] = Debug._printSwapRegisters;
         opcodes[1] = Debug._printSwapQuery;
         opcodes[2] = Debug._printContext;

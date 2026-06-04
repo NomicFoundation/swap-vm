@@ -82,16 +82,9 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         TokenMock(tokenIn).mint(taker, amount * 10);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         // Verify the swap consumed the expected input amount
-
 
         return (actualIn, actualOut);
     }
@@ -108,22 +101,19 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // TODO: BaseFeeAdjuster breaks symmetry and additivity due to asymmetric gas adjustments
@@ -142,28 +132,24 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // TODO: BaseFeeAdjuster breaks symmetry and additivity due to asymmetric gas adjustments
         _testInvariantsWithConfig(bytecode, 100 gwei, true, true, false);
     }
-
 
     /**
      * Test BaseFeeAdjuster with protocol fee
@@ -177,22 +163,19 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_protocolFeeAmountOutXD, FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // TODO: BaseFeeAdjuster breaks symmetry and additivity due to asymmetric gas adjustments
@@ -212,25 +195,24 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
+                )
+            ),
             // Multiple fees
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(flatFeeBps)),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(protocolFeeBps, protocolFeeCollector)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(flatFeeBps)),
+            program.build(
+                _protocolFeeAmountOutXD,
+                FeeArgsBuilder.buildProtocolFee(protocolFeeBps, protocolFeeCollector)
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // TODO: BaseFeeAdjuster breaks symmetry and additivity due to asymmetric gas adjustments
@@ -249,22 +231,19 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // TODO: BaseFeeAdjuster breaks symmetry and additivity due to asymmetric gas adjustments
@@ -287,24 +266,20 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // Test at mid-auction with high gas
@@ -329,24 +304,20 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_flatFeeAmountOutXD,
-                FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // Test at mid-auction with high gas
@@ -361,40 +332,36 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
     function test_BaseFeeAdjuster_DutchAuctionIn_ProtocolFee() public {
         uint40 startTime = uint40(block.timestamp);
         uint16 duration = 300;
-        uint64 decayFactor = 0.99e18;  // Less aggressive decay
+        uint64 decayFactor = 0.99e18; // Less aggressive decay
 
         uint64 baseGasPrice = 30 gwei;
         uint96 ethToTokenPrice = 2800e18;
-        uint24 gasAmount = 100_000;  // Reduced gas amount
-        uint64 maxPriceDecay = 99e16;  // Less aggressive max price adjustment
+        uint24 gasAmount = 100_000; // Reduced gas amount
+        uint64 maxPriceDecay = 99e16; // Less aggressive max price adjustment
         uint32 feeBps = 200; // 2% protocol fee
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_protocolFeeAmountOutXD, FeeArgsBuilder.buildProtocolFee(feeBps, protocolFeeCollector)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // Test at mid-auction with moderate gas
         vm.warp(startTime + 150);
         // TODO: BaseFeeAdjuster breaks symmetry and additivity due to asymmetric gas adjustments
-        _testInvariantsWithConfig(bytecode, 100 gwei, true, true, false);  // Reduced gas price
+        _testInvariantsWithConfig(bytecode, 100 gwei, true, true, false); // Reduced gas price
     }
 
     /**
@@ -414,26 +381,24 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_flatFeeAmountInXD,
-                FeeArgsBuilder.buildFlatFee(flatFeeBps)),
-            program.build(_protocolFeeAmountOutXD,
-                FeeArgsBuilder.buildProtocolFee(protocolFeeBps, protocolFeeCollector)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
-            program.build(_baseFeeAdjuster1D,
-                BaseFeeAdjusterArgsBuilder.build(
-                    baseGasPrice,
-                    ethToTokenPrice,
-                    gasAmount,
-                    maxPriceDecay
-                ))
+                )
+            ),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(flatFeeBps)),
+            program.build(
+                _protocolFeeAmountOutXD,
+                FeeArgsBuilder.buildProtocolFee(protocolFeeBps, protocolFeeCollector)
+            ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB))),
+            program.build(
+                _baseFeeAdjuster1D,
+                BaseFeeAdjusterArgsBuilder.build(baseGasPrice, ethToTokenPrice, gasAmount, maxPriceDecay)
+            )
         );
 
         // Test at mid-auction with high gas
@@ -489,37 +454,34 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
         // TODO: Research monotonicity behavior with progressive fees and gas adjustment
         config.skipMonotonicity = skipMonotonicity;
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -533,27 +495,29 @@ contract BaseFeeAdjusterFeesInvariants is Test, OpcodesDebug, CoreInvariants {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

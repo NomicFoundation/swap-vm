@@ -68,9 +68,9 @@ contract DutchAuctionTest is Test, OpcodesDebug {
      */
     function test_DutchAuctionIn_DecayFactors() public {
         uint64[] memory decayFactors = new uint64[](3);
-        decayFactors[0] = 0.999e18;  // 0.1% decay per second
-        decayFactors[1] = 0.995e18;  // 0.5% decay per second
-        decayFactors[2] = 0.99e18;   // 1% decay per second
+        decayFactors[0] = 0.999e18; // 0.1% decay per second
+        decayFactors[1] = 0.995e18; // 0.5% decay per second
+        decayFactors[2] = 0.99e18; // 1% decay per second
 
         for (uint256 i = 0; i < decayFactors.length; i++) {
             _testDutchAuctionWithDecay(decayFactors[i], true);
@@ -82,9 +82,9 @@ contract DutchAuctionTest is Test, OpcodesDebug {
      */
     function test_DutchAuctionOut_DecayFactors() public {
         uint64[] memory decayFactors = new uint64[](3);
-        decayFactors[0] = 0.999e18;  // 0.1% decay per second
-        decayFactors[1] = 0.995e18;  // 0.5% decay per second
-        decayFactors[2] = 0.99e18;   // 1% decay per second
+        decayFactors[0] = 0.999e18; // 0.1% decay per second
+        decayFactors[1] = 0.995e18; // 0.5% decay per second
+        decayFactors[2] = 0.99e18; // 1% decay per second
 
         for (uint256 i = 0; i < decayFactors.length; i++) {
             _testDutchAuctionWithDecay(decayFactors[i], false);
@@ -101,15 +101,15 @@ contract DutchAuctionTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(200e18)])
-                )),
-            program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceOut1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -121,13 +121,7 @@ contract DutchAuctionTest is Test, OpcodesDebug {
         // Should revert on actual swap execution
         TokenMock(address(tokenA)).mint(taker, 10e18);
         vm.expectRevert(abi.encodeWithSelector(DutchAuctionExpired.selector, block.timestamp, startTime + duration)); // Dutch auction should revert when expired
-        swapVM.swap(
-            order,
-            address(tokenA),
-            address(tokenB),
-            10e18,
-            exactInData
-        );
+        swapVM.swap(order, address(tokenA), address(tokenB), 10e18, exactInData);
     }
 
     /**
@@ -140,15 +134,15 @@ contract DutchAuctionTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(100e18), uint256(200e18)])
-                )),
-            program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            program.build(_dutchAuctionBalanceIn1D, DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -160,13 +154,7 @@ contract DutchAuctionTest is Test, OpcodesDebug {
         // Should revert on actual swap execution
         TokenMock(address(tokenA)).mint(taker, 10e18);
         vm.expectRevert(abi.encodeWithSelector(DutchAuctionExpired.selector, block.timestamp, startTime + duration)); // Dutch auction should revert when expired
-        swapVM.swap(
-            order,
-            address(tokenA),
-            address(tokenB),
-            10e18,
-            exactInData
-        );
+        swapVM.swap(order, address(tokenA), address(tokenB), 10e18, exactInData);
     }
 
     /**
@@ -178,17 +166,23 @@ contract DutchAuctionTest is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_staticBalancesXD,
+            program.build(
+                _staticBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1e30), uint256(2e30)])
-                )),
-            useIn ? program.build(_dutchAuctionBalanceIn1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)) :
-                program.build(_dutchAuctionBalanceOut1D,
-                DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+                )
+            ),
+            useIn
+                ? program.build(
+                    _dutchAuctionBalanceIn1D,
+                    DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)
+                )
+                : program.build(
+                    _dutchAuctionBalanceOut1D,
+                    DutchAuctionArgsBuilder.build(startTime, duration, decayFactor)
+                ),
+            program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -196,10 +190,10 @@ contract DutchAuctionTest is Test, OpcodesDebug {
 
         // Test at different time points
         uint256[] memory timeOffsets = new uint256[](4);
-        timeOffsets[0] = 0;     // Start
-        timeOffsets[1] = 60;    // 1 minute
-        timeOffsets[2] = 150;   // 2.5 minutes
-        timeOffsets[3] = 299;   // Just before expiry
+        timeOffsets[0] = 0; // Start
+        timeOffsets[1] = 60; // 1 minute
+        timeOffsets[2] = 150; // 2.5 minutes
+        timeOffsets[3] = 299; // Just before expiry
 
         uint256[] memory outputs = new uint256[](4);
 
@@ -214,7 +208,7 @@ contract DutchAuctionTest is Test, OpcodesDebug {
             uint256 amountIn = 100e18;
             TokenMock(address(tokenA)).mint(taker, amountIn);
 
-            (uint256 actualIn, uint256 actualOut,) = swapVM.swap(
+            (uint256 actualIn, uint256 actualOut, ) = swapVM.swap(
                 order,
                 address(tokenA),
                 address(tokenB),
@@ -239,7 +233,7 @@ contract DutchAuctionTest is Test, OpcodesDebug {
             // This makes the price better for the taker (Dutch auction effect)
             // So for the same input amount, we get MORE output over time
             for (uint256 i = 1; i < outputs.length; i++) {
-                assertGt(outputs[i], outputs[i-1], "Output should increase over time for balance in decay");
+                assertGt(outputs[i], outputs[i - 1], "Output should increase over time for balance in decay");
             }
         } else {
             // For balance out decay: as time passes, the effective balance out INCREASES
@@ -247,33 +241,36 @@ contract DutchAuctionTest is Test, OpcodesDebug {
             // This also makes the price better for the taker
             // So for the same input amount, we get MORE output over time
             for (uint256 i = 1; i < outputs.length; i++) {
-                assertGt(outputs[i], outputs[i-1], "Output should increase over time for balance out decay");
+                assertGt(outputs[i], outputs[i - 1], "Output should increase over time for balance out decay");
             }
         }
     }
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -287,27 +284,29 @@ contract DutchAuctionTest is Test, OpcodesDebug {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

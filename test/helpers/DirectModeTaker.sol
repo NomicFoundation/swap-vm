@@ -33,18 +33,32 @@ contract DirectModeTaker {
         uint256 amount,
         bytes calldata takerTraitsAndData
     ) public onlyOwner returns (uint256 amountIn, uint256 amountOut) {
-        (amountIn, amountOut,) = SWAPVM.swap(order, tokenIn, tokenOut, amount, takerTraitsAndData);
+        (amountIn, amountOut, ) = SWAPVM.swap(order, tokenIn, tokenOut, amount, takerTraitsAndData);
     }
 
     // Callback does nothing in direct mode - just validates it was called
     function preTransferInCallback(
-        address, address, address, address, uint256, uint256, bytes32, bytes calldata
+        address,
+        address,
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes32,
+        bytes calldata
     ) external view onlySwapVM {
         // No-op for direct mode - tokens transferred directly, not via Aqua
     }
 
     function preTransferOutCallback(
-        address, address, address, address, uint256, uint256, bytes32, bytes calldata
+        address,
+        address,
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes32,
+        bytes calldata
     ) external view onlySwapVM {
         // No-op
     }

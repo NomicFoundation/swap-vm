@@ -40,7 +40,10 @@ contract LimitSwap {
 
     /// @param args.makerDirectionLt | 1 byte (boolean, true if tokenIn < tokenOut)
     function _limitSwap1D(Context memory ctx, bytes calldata args) internal pure {
-        require(ctx.swap.balanceIn > 0 && ctx.swap.balanceOut > 0, LimitSwapRequiresBothBalancesNonZero(ctx.swap.balanceIn, ctx.swap.balanceOut));
+        require(
+            ctx.swap.balanceIn > 0 && ctx.swap.balanceOut > 0,
+            LimitSwapRequiresBothBalancesNonZero(ctx.swap.balanceIn, ctx.swap.balanceOut)
+        );
 
         bool makerDirectionLt = LimitSwapArgsBuilder.parse(args);
         bool takerDirectionLt = ctx.query.tokenIn < ctx.query.tokenOut;
@@ -48,7 +51,7 @@ contract LimitSwap {
 
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, LimitSwapRecomputeDetected());
-            ctx.swap.amountOut = ctx.swap.amountIn * ctx.swap.balanceOut / ctx.swap.balanceIn; // Floor division for tokenOut is desired behavior
+            ctx.swap.amountOut = (ctx.swap.amountIn * ctx.swap.balanceOut) / ctx.swap.balanceIn; // Floor division for tokenOut is desired behavior
         } else {
             require(ctx.swap.amountIn == 0, LimitSwapRecomputeDetected());
             ctx.swap.amountIn = (ctx.swap.amountOut * ctx.swap.balanceIn).ceilDiv(ctx.swap.balanceOut); // Ceiling division for tokenIn is desired behavior
@@ -57,18 +60,27 @@ contract LimitSwap {
 
     /// @param args.makerDirectionLt | 1 byte (boolean, true if tokenIn < tokenOut)
     function _limitSwapOnlyFull1D(Context memory ctx, bytes calldata args) internal pure {
-        require(ctx.swap.balanceIn > 0 && ctx.swap.balanceOut > 0, LimitSwapRequiresBothBalancesNonZero(ctx.swap.balanceIn, ctx.swap.balanceOut));
+        require(
+            ctx.swap.balanceIn > 0 && ctx.swap.balanceOut > 0,
+            LimitSwapRequiresBothBalancesNonZero(ctx.swap.balanceIn, ctx.swap.balanceOut)
+        );
 
         bool makerDirectionLt = LimitSwapArgsBuilder.parse(args);
         bool takerDirectionLt = ctx.query.tokenIn < ctx.query.tokenOut;
         require(makerDirectionLt == takerDirectionLt, LimitSwapDirectionMismatch());
 
         if (ctx.query.isExactIn) {
-            require(ctx.swap.amountIn == ctx.swap.balanceIn, LimitSwapFullyRequiresAmountInToMatchBalanceIn(ctx.swap.amountIn, ctx.swap.balanceIn));
+            require(
+                ctx.swap.amountIn == ctx.swap.balanceIn,
+                LimitSwapFullyRequiresAmountInToMatchBalanceIn(ctx.swap.amountIn, ctx.swap.balanceIn)
+            );
             require(ctx.swap.amountOut == 0, LimitSwapRecomputeDetected());
             ctx.swap.amountOut = ctx.swap.balanceOut;
         } else {
-            require(ctx.swap.amountOut == ctx.swap.balanceOut, LimitSwapFullyRequiresAmountOutToMatchBalanceOut(ctx.swap.amountOut, ctx.swap.balanceOut));
+            require(
+                ctx.swap.amountOut == ctx.swap.balanceOut,
+                LimitSwapFullyRequiresAmountOutToMatchBalanceOut(ctx.swap.amountOut, ctx.swap.balanceOut)
+            );
             require(ctx.swap.amountIn == 0, LimitSwapRecomputeDetected());
             ctx.swap.amountIn = ctx.swap.balanceIn;
         }

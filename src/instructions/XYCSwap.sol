@@ -15,14 +15,14 @@ contract XYCSwap {
     error XYCSwapRequiresBothBalancesNonZero(uint256 balanceIn, uint256 balanceOut);
 
     function _xycSwapXD(Context memory ctx, bytes calldata /* args */) internal pure {
-        require(ctx.swap.balanceIn > 0 && ctx.swap.balanceOut > 0, XYCSwapRequiresBothBalancesNonZero(ctx.swap.balanceIn, ctx.swap.balanceOut));
+        require(
+            ctx.swap.balanceIn > 0 && ctx.swap.balanceOut > 0,
+            XYCSwapRequiresBothBalancesNonZero(ctx.swap.balanceIn, ctx.swap.balanceOut)
+        );
 
         if (ctx.query.isExactIn) {
             require(ctx.swap.amountOut == 0, XYCSwapRecomputeDetected());
-            ctx.swap.amountOut = (
-                (ctx.swap.amountIn * ctx.swap.balanceOut) /
-                (ctx.swap.balanceIn + ctx.swap.amountIn)
-            );
+            ctx.swap.amountOut = ((ctx.swap.amountIn * ctx.swap.balanceOut) / (ctx.swap.balanceIn + ctx.swap.amountIn));
         } else {
             require(ctx.swap.amountIn == 0, XYCSwapRecomputeDetected());
             ctx.swap.amountIn = Math.ceilDiv(

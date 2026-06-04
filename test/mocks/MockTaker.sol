@@ -38,13 +38,7 @@ contract MockTaker is ITakerCallbacks {
         uint256 amount,
         bytes calldata takerTraitsAndData
     ) public onlyOwner returns (uint256 amountIn, uint256 amountOut) {
-        (amountIn, amountOut,) = SWAPVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerTraitsAndData
-        );
+        (amountIn, amountOut, ) = SWAPVM.swap(order, tokenIn, tokenOut, amount, takerTraitsAndData);
     }
 
     function preTransferInCallback(

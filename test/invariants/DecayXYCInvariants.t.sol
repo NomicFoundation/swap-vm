@@ -22,7 +22,6 @@ import { dynamic } from "../utils/Dynamic.sol";
 
 import { CoreInvariants } from "./CoreInvariants.t.sol";
 
-
 /**
  * @title DecayXYCInvariants
  * @notice Tests invariants for Decay AMM combined with XYCSwap
@@ -79,13 +78,7 @@ contract DecayXYCInvariants is Test, OpcodesDebug, CoreInvariants {
         // Execute the swap
         // For the swap call, we need to pass the original amount from quote
         // which CoreInvariants stored in the first quote call
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         return (actualIn, actualOut);
     }
@@ -95,10 +88,10 @@ contract DecayXYCInvariants is Test, OpcodesDebug, CoreInvariants {
      */
     function test_DecayXYCDifferentPeriods() public {
         uint16[] memory periods = new uint16[](4);
-        periods[0] = 60;     // 1 minute decay
-        periods[1] = 300;    // 5 minutes decay
-        periods[2] = 3600;   // 1 hour decay
-        periods[3] = 43200;  // 12 hours decay (max that fits in uint16)
+        periods[0] = 60; // 1 minute decay
+        periods[1] = 300; // 5 minutes decay
+        periods[2] = 3600; // 1 hour decay
+        periods[3] = 43200; // 12 hours decay (max that fits in uint16)
 
         for (uint256 i = 0; i < periods.length; i++) {
             _testDecayXYCWithPeriod(periods[i]);
@@ -134,13 +127,14 @@ contract DecayXYCInvariants is Test, OpcodesDebug, CoreInvariants {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
+            program.build(
+                _dynamicBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1000e18), uint256(1000e18)])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(period)),
+                )
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(period)),
             program.build(_xycSwapXD)
         );
 
@@ -157,13 +151,7 @@ contract DecayXYCInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -172,13 +160,14 @@ contract DecayXYCInvariants is Test, OpcodesDebug, CoreInvariants {
     function _testDecayXYCWithPeriod(uint16 period) private {
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
+            program.build(
+                _dynamicBalancesXD,
                 BalancesArgsBuilder.build(
                     dynamic([address(tokenA), address(tokenB)]),
                     dynamic([uint256(1000e18), uint256(1000e18)])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(period)),
+                )
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(period)),
             program.build(_xycSwapXD)
         );
 
@@ -195,37 +184,34 @@ contract DecayXYCInvariants is Test, OpcodesDebug, CoreInvariants {
         config.exactInTakerData = exactInData;
         config.exactOutTakerData = _signAndPackTakerData(order, false, type(uint256).max);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     // Helper functions
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -239,27 +225,29 @@ contract DecayXYCInvariants is Test, OpcodesDebug, CoreInvariants {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

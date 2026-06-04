@@ -31,11 +31,26 @@ library RoundingInvariants {
         uint256 atomicAmount,
         uint256 iterations,
         bytes memory takerData,
-        function(SwapVM, ISwapVM.Order memory, address, address, uint256, bytes memory)
-            internal returns (uint256) executeSwap
+        function(
+            SwapVM,
+            ISwapVM.Order memory,
+            address,
+            address,
+            uint256,
+            bytes memory
+        ) internal returns (uint256) executeSwap
     ) internal {
         assertNoAccumulationExploitWithTolerance(
-            vm_, swapVM, order, tokenIn, tokenOut, atomicAmount, iterations, takerData, executeSwap, 0
+            vm_,
+            swapVM,
+            order,
+            tokenIn,
+            tokenOut,
+            atomicAmount,
+            iterations,
+            takerData,
+            executeSwap,
+            0
         );
     }
 
@@ -53,8 +68,14 @@ library RoundingInvariants {
         uint256 atomicAmount,
         uint256 iterations,
         bytes memory takerData,
-        function(SwapVM, ISwapVM.Order memory, address, address, uint256, bytes memory)
-            internal returns (uint256) executeSwap,
+        function(
+            SwapVM,
+            ISwapVM.Order memory,
+            address,
+            address,
+            uint256,
+            bytes memory
+        ) internal returns (uint256) executeSwap,
         uint256 toleranceBps
     ) internal {
         uint256 snapshot = vm_.snapshot();
@@ -97,8 +118,14 @@ library RoundingInvariants {
         uint256 initialAmount,
         uint256 iterations,
         bytes memory takerData,
-        function(SwapVM, ISwapVM.Order memory, address, address, uint256, bytes memory)
-            internal returns (uint256) executeSwap
+        function(
+            SwapVM,
+            ISwapVM.Order memory,
+            address,
+            address,
+            uint256,
+            bytes memory
+        ) internal returns (uint256) executeSwap
     ) internal {
         uint256 snapshot = vm_.snapshot();
 
@@ -135,8 +162,14 @@ library RoundingInvariants {
         address tokenA,
         address tokenB,
         bytes memory takerData,
-        function(SwapVM, ISwapVM.Order memory, address, address, uint256, bytes memory)
-            internal returns (uint256) executeSwap
+        function(
+            SwapVM,
+            ISwapVM.Order memory,
+            address,
+            address,
+            uint256,
+            bytes memory
+        ) internal returns (uint256) executeSwap
     ) internal {
         console.log("\n=== Rounding Invariant Tests ===");
 
@@ -163,4 +196,3 @@ library RoundingInvariants {
         console.log("=== All rounding tests passed ===\n");
     }
 }
-

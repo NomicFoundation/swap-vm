@@ -16,13 +16,13 @@ library Config {
     error VersionDoesNotExist();
     error OwnerAddressDoesNotExist();
 
-    function readSwapVMRouterParameters(Vm vm) internal view returns (
-        address aquaAddress,
-        address wethAddress,
-        address owner,
-        string memory name,
-        string memory version
-    ) {
+    function readSwapVMRouterParameters(
+        Vm vm
+    )
+        internal
+        view
+        returns (address aquaAddress, address wethAddress, address owner, string memory name, string memory version)
+    {
         uint256 chain = block.chainid;
 
         string memory path = string.concat(vm.projectRoot(), "/config/constants.json");

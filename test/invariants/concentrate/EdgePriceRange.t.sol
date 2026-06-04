@@ -32,15 +32,15 @@ contract EdgePriceRange is ConcentrateXYCFeesInvariants {
         _computeInitialBalances();
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        flatFeeInBps = 0.003e9; // 0.3%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Test amounts
         testAmounts = new uint256[](4);
-        testAmounts[0] = 1e18;     // 1 token
-        testAmounts[1] = 10e18;    // 10 tokens
-        testAmounts[2] = 50e18;    // 50 tokens
-        testAmounts[3] = 100e18;   // 100 tokens
+        testAmounts[0] = 1e18; // 1 token
+        testAmounts[1] = 10e18; // 10 tokens
+        testAmounts[2] = 50e18; // 50 tokens
+        testAmounts[3] = 100e18; // 100 tokens
 
         // Tolerances
         symmetryTolerance = 0;
@@ -56,19 +56,11 @@ contract EdgePriceRange is ConcentrateXYCFeesInvariants {
         sqrtPriceMax = Math.sqrt(1.5e36);
         _computeInitialBalances();
 
-        bytes memory bytecode = _buildConcentrateProgram(
-            balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0
-        );
+        bytes memory bytecode = _buildConcentrateProgram(balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0);
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -80,19 +72,11 @@ contract EdgePriceRange is ConcentrateXYCFeesInvariants {
         sqrtPriceMax = Math.sqrt(1.15e36);
         _computeInitialBalances();
 
-        bytes memory bytecode = _buildConcentrateProgram(
-            balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0
-        );
+        bytes memory bytecode = _buildConcentrateProgram(balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0);
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 
     /**
@@ -104,18 +88,10 @@ contract EdgePriceRange is ConcentrateXYCFeesInvariants {
         sqrtPriceMax = Math.sqrt(1.01e36);
         _computeInitialBalances();
 
-        bytes memory bytecode = _buildConcentrateProgram(
-            balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0
-        );
+        bytes memory bytecode = _buildConcentrateProgram(balanceA, balanceB, sqrtPriceMin, sqrtPriceMax, 0, 0);
         ISwapVM.Order memory order = _createOrder(bytecode);
         InvariantConfig memory config = _config(order);
 
-        assertAllInvariantsWithConfig(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            config
-        );
+        assertAllInvariantsWithConfig(swapVM, order, address(tokenA), address(tokenB), config);
     }
 }

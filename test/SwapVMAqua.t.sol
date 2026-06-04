@@ -7,7 +7,6 @@ pragma solidity 0.8.30;
 import { AquaSwapVMTest } from "./base/AquaSwapVMTest.sol";
 import { ISwapVM } from "../src/SwapVM.sol";
 
-
 import { XYCSwap } from "../src/instructions/XYCSwap.sol";
 import { Program, ProgramBuilder } from "./utils/ProgramBuilder.sol";
 import { TakerTraitsLib } from "../src/libs/TakerTraits.sol";
@@ -21,16 +20,17 @@ contract SwapVMAquaTest is AquaSwapVMTest {
     }
 
     function _makerSetup() internal pure returns (MakerSetup memory) {
-        return MakerSetup({
-            balanceA: 100e18,
-            balanceB: 200e18,
-            priceMin: 0,
-            priceMax: 0,
-            protocolFeeBps: 0,
-            feeInBps: 0,
-            protocolFeeRecipient: address(0),
-            swapType: SwapType.XYC
-        });
+        return
+            MakerSetup({
+                balanceA: 100e18,
+                balanceB: 200e18,
+                priceMin: 0,
+                priceMax: 0,
+                protocolFeeBps: 0,
+                feeInBps: 0,
+                protocolFeeRecipient: address(0),
+                swapType: SwapType.XYC
+            });
     }
 
     function test_Aqua_XYC_SimpleSwap() public {
@@ -45,7 +45,7 @@ contract SwapVMAquaTest is AquaSwapVMTest {
             taker: taker,
             tokenA: tokenA,
             tokenB: tokenB,
-            zeroForOne: false,  // Swap tokenB (token1) for tokenA (token0); zeroForOne=false means token1->token0
+            zeroForOne: false, // Swap tokenB (token1) for tokenA (token0); zeroForOne=false means token1->token0
             isExactIn: true
         });
 
@@ -77,7 +77,7 @@ contract SwapVMAquaTest is AquaSwapVMTest {
             taker: takerFirstTransfer,
             tokenA: tokenA,
             tokenB: tokenB,
-            zeroForOne: false,  // Swap tokenB for tokenA
+            zeroForOne: false, // Swap tokenB for tokenA
             isExactIn: true
         });
 
@@ -89,27 +89,29 @@ contract SwapVMAquaTest is AquaSwapVMTest {
         tokenA.mint(address(takerFirstTransfer), expectedAmountOut);
 
         // Create custom taker data with isFirstTransferFromTaker = true
-        bytes memory customTakerData = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(swapProgram.taker),
-            isExactIn: swapProgram.isExactIn,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: true,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: true,  // This flag ensures tokens are first sent from taker
-            useTransferFromAndAquaPush: false,
-            threshold: "",
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: ""
-        }));
+        bytes memory customTakerData = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(swapProgram.taker),
+                isExactIn: swapProgram.isExactIn,
+                shouldUnwrapWeth: false,
+                hasPreTransferInCallback: true,
+                hasPreTransferOutCallback: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: true, // This flag ensures tokens are first sent from taker
+                useTransferFromAndAquaPush: false,
+                threshold: "",
+                to: address(0),
+                deadline: 0,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: ""
+            })
+        );
 
         bytes memory sigAndTakerData = abi.encodePacked(customTakerData);
         (address tokenIn, address tokenOut) = getTokenAddresses(swapProgram);

@@ -151,15 +151,19 @@ contract Fee {
         address to;
 
         if (feeProvider != address(0)) {
-            (bool success, bytes memory result) = feeProvider.staticcall(abi.encodeCall(
-                IProtocolFeeProvider.getFeeBpsAndRecipient,
-                (ctx.query.orderHash,
-                ctx.query.maker,
-                ctx.query.taker,
-                ctx.query.tokenIn,
-                ctx.query.tokenOut,
-                ctx.query.isExactIn)
-            ));
+            (bool success, bytes memory result) = feeProvider.staticcall(
+                abi.encodeCall(
+                    IProtocolFeeProvider.getFeeBpsAndRecipient,
+                    (
+                        ctx.query.orderHash,
+                        ctx.query.maker,
+                        ctx.query.taker,
+                        ctx.query.tokenIn,
+                        ctx.query.tokenOut,
+                        ctx.query.isExactIn
+                    )
+                )
+            );
 
             require(success && result.length == 64, FeeProtocolProviderFailedCall());
             (feeBps, to) = abi.decode(result, (uint32, address));
@@ -200,15 +204,19 @@ contract Fee {
         address to;
 
         if (feeProvider != address(0)) {
-            (bool success, bytes memory result) = feeProvider.staticcall(abi.encodeCall(
-                IProtocolFeeProvider.getFeeBpsAndRecipient,
-                (ctx.query.orderHash,
-                ctx.query.maker,
-                ctx.query.taker,
-                ctx.query.tokenIn,
-                ctx.query.tokenOut,
-                ctx.query.isExactIn)
-            ));
+            (bool success, bytes memory result) = feeProvider.staticcall(
+                abi.encodeCall(
+                    IProtocolFeeProvider.getFeeBpsAndRecipient,
+                    (
+                        ctx.query.orderHash,
+                        ctx.query.maker,
+                        ctx.query.taker,
+                        ctx.query.tokenIn,
+                        ctx.query.tokenOut,
+                        ctx.query.isExactIn
+                    )
+                )
+            );
 
             require(success && result.length == 64, FeeProtocolProviderFailedCall());
             (feeBps, to) = abi.decode(result, (uint32, address));
@@ -235,14 +243,14 @@ contract Fee {
         if (ctx.query.isExactIn) {
             // Decrease amountIn by fee only during swap-instruction
             uint256 takerDefinedAmountIn = ctx.swap.amountIn;
-            feeAmountIn = ctx.swap.amountIn * feeBps / BPS;
+            feeAmountIn = (ctx.swap.amountIn * feeBps) / BPS;
             ctx.swap.amountIn -= feeAmountIn;
             ctx.runLoop();
             ctx.swap.amountIn = takerDefinedAmountIn;
         } else {
             // Increase amountIn by fee after swap-instruction
             ctx.runLoop();
-            feeAmountIn = ctx.swap.amountIn * feeBps / (BPS - feeBps);
+            feeAmountIn = (ctx.swap.amountIn * feeBps) / (BPS - feeBps);
             ctx.swap.amountIn += feeAmountIn;
         }
     }

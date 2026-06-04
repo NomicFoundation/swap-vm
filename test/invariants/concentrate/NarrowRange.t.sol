@@ -21,23 +21,23 @@ contract NarrowRange is ConcentrateXYCFeesInvariants {
         availableLiquidity = 1000e18;
 
         // NARROW concentration range (±5%)
-        sqrtPriceMin = Math.sqrt(0.95e36);   // sqrt(0.95) in 1e18
-        sqrtPriceMax = Math.sqrt(1.05e36);   // sqrt(1.05) in 1e18
+        sqrtPriceMin = Math.sqrt(0.95e36); // sqrt(0.95) in 1e18
+        sqrtPriceMax = Math.sqrt(1.05e36); // sqrt(1.05) in 1e18
 
         // Recompute balances - narrow range means more tokens in real balances
         _computeInitialBalances();
 
         // Standard fees
-        flatFeeInBps = 0.003e9;        // 0.3%
-        protocolFeeOutBps = 0.002e9;   // 0.2%
+        flatFeeInBps = 0.003e9; // 0.3%
+        protocolFeeOutBps = 0.002e9; // 0.2%
 
         // Test amounts
         testAmounts = new uint256[](5);
-        testAmounts[0] = 1e18;     // 1 token
-        testAmounts[1] = 10e18;    // 10 tokens
-        testAmounts[2] = 50e18;    // 50 tokens
-        testAmounts[3] = 100e18;   // 100 tokens
-        testAmounts[4] = 200e18;   // 200 tokens
+        testAmounts[0] = 1e18; // 1 token
+        testAmounts[1] = 10e18; // 10 tokens
+        testAmounts[2] = 50e18; // 50 tokens
+        testAmounts[3] = 100e18; // 100 tokens
+        testAmounts[4] = 200e18; // 200 tokens
 
         // Tolerances - narrow range may amplify rounding
         symmetryTolerance = 0;

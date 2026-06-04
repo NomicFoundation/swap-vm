@@ -12,41 +12,35 @@ import { BPS } from "../src/instructions/Fee.sol";
 import { ContextLib } from "../src/libs/VM.sol";
 import { TakerTraitsLib } from "../src/libs/TakerTraits.sol";
 
-
-
 contract FeeAquaTest is AquaSwapVMTest {
     function setUp() public virtual override {
         super.setUp();
     }
 
-    function _makerSetup(
-        uint32 feeInBps
-    ) internal pure returns (MakerSetup memory) {
-        return MakerSetup({
-            balanceA: INITIAL_BALANCE_A,
-            balanceB: INITIAL_BALANCE_B,
-            priceMin: 0,
-            priceMax: 0,
-            protocolFeeBps: 0,
-            feeInBps: feeInBps,
-            protocolFeeRecipient: address(0),
-            swapType: SwapType.XYC
-        });
+    function _makerSetup(uint32 feeInBps) internal pure returns (MakerSetup memory) {
+        return
+            MakerSetup({
+                balanceA: INITIAL_BALANCE_A,
+                balanceB: INITIAL_BALANCE_B,
+                priceMin: 0,
+                priceMax: 0,
+                protocolFeeBps: 0,
+                feeInBps: feeInBps,
+                protocolFeeRecipient: address(0),
+                swapType: SwapType.XYC
+            });
     }
 
-    function _swapProgram(
-        uint256 amount,
-        bool zeroForOne,
-        bool isExactIn
-    ) internal view returns (SwapProgram memory) {
-        return SwapProgram({
-            amount: amount,
-            taker: taker,
-            tokenA: tokenA,
-            tokenB: tokenB,
-            zeroForOne: zeroForOne,
-            isExactIn: isExactIn
-        });
+    function _swapProgram(uint256 amount, bool zeroForOne, bool isExactIn) internal view returns (SwapProgram memory) {
+        return
+            SwapProgram({
+                amount: amount,
+                taker: taker,
+                tokenA: tokenA,
+                tokenB: tokenB,
+                zeroForOne: zeroForOne,
+                isExactIn: isExactIn
+            });
     }
 
     function test_Aqua_FeeIn_ExactIn_BalanceAfterSwap() public {
@@ -66,8 +60,9 @@ contract FeeAquaTest is AquaSwapVMTest {
         (uint256 makerBalanceAAfter, uint256 makerBalanceBAfter) = getAquaBalances(strategyHash);
         (uint256 takerBalanceAAfter, uint256 takerBalanceBAfter) = getTakerBalances(swapProgram.taker);
 
-        uint256 expectedFee = amountIn * setup.feeInBps / BPS;
-        uint256 amountOutExpected = setup.balanceB * (amountIn - expectedFee) / (setup.balanceA + amountIn - expectedFee);
+        uint256 expectedFee = (amountIn * setup.feeInBps) / BPS;
+        uint256 amountOutExpected =
+            (setup.balanceB * (amountIn - expectedFee)) / (setup.balanceA + amountIn - expectedFee);
         assertEq(takerBalanceBAfter - takerBalanceBBefore, amountOutExpected, "Taker received correct amountOut");
         assertEq(makerBalanceAAfter, makerBalanceABefore + amountIn, "Maker balance A should increase by amountIn");
         assertEq(makerBalanceBAfter, makerBalanceBBefore - amountOut, "Maker balance B should decrease by amountOut");

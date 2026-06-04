@@ -73,17 +73,18 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         TWAPSwapArgsBuilder.TwapArgs memory twapArgs
     ) private view returns (bytes memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
-        return bytes.concat(
-            program.build(_staticBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([tokenABalance, tokenBBalance])
-                )),
-            program.build(_twap,
-                TWAPSwapArgsBuilder.build(twapArgs)),
-            program.build(_limitSwap1D,
-                LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
-        );
+        return
+            bytes.concat(
+                program.build(
+                    _staticBalancesXD,
+                    BalancesArgsBuilder.build(
+                        dynamic([address(tokenA), address(tokenB)]),
+                        dynamic([tokenABalance, tokenBBalance])
+                    )
+                ),
+                program.build(_twap, TWAPSwapArgsBuilder.build(twapArgs)),
+                program.build(_limitSwap1D, LimitSwapArgsBuilder.build(address(tokenA), address(tokenB)))
+            );
     }
 
     /**
@@ -95,7 +96,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             200e18,
-            100e18,  // 2:1 rate (tokenA:tokenB)
+            100e18, // 2:1 rate (tokenA:tokenB)
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 200e18,
                 balanceOut: 100e18,
@@ -127,14 +128,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         // Test after TWAP ends - no minimum restriction
         vm.warp(startTime + duration + 1);
 
-        uint256 finalOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            40e18,
-            exactInData
-        );
+        uint256 finalOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 40e18, exactInData);
 
         assertGt(finalOut, 10e18, "Should get output after TWAP ends");
     }
@@ -148,7 +142,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             2000e18,
-            1000e18,  // 2:1 rate
+            1000e18, // 2:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 2000e18,
                 balanceOut: 1000e18,
@@ -163,7 +157,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
         // Trade after 10% of duration
-        vm.warp(startTime + duration * 10 / 100);
+        vm.warp(startTime + (duration * 10) / 100);
 
         uint256 firstAmountOut = _executeSwap(
             swapVM,
@@ -179,14 +173,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         // Test after TWAP ends
         vm.warp(startTime + duration + 1);
 
-        uint256 laterOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            10e18,
-            exactInData
-        );
+        uint256 laterOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 10e18, exactInData);
 
         assertGt(laterOut, 0, "Should get output after TWAP");
     }
@@ -200,7 +187,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             2000e18,
-            1000e18,  // 2:1 rate
+            1000e18, // 2:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 2000e18,
                 balanceOut: 1000e18,
@@ -215,7 +202,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
         // Wait for sufficient liquidity
-        vm.warp(startTime + duration * 50 / 100);
+        vm.warp(startTime + (duration * 50) / 100);
 
         // Execute larger trade to meet minimum
         uint256 firstOut = _executeSwap(
@@ -239,7 +226,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             200e18,
-            100e18,  // 2:1 rate
+            100e18, // 2:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 200e18,
                 balanceOut: 100e18,
@@ -259,26 +246,13 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         // Small trade should fail (would give <5e18 output)
         TokenMock(tokenA).mint(taker, 2e18);
         vm.expectRevert();
-        swapVM.swap(
-            order,
-            address(tokenA),
-            address(tokenB),
-            2e18,
-            exactInData
-        );
+        swapVM.swap(order, address(tokenA), address(tokenB), 2e18, exactInData);
 
         // After TWAP period ends
         vm.warp(startTime + duration + 1);
 
         // Small trade should work now (no minimum after TWAP)
-        uint256 amountOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            2e18,
-            exactInData
-        );
+        uint256 amountOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 2e18, exactInData);
         assertGt(amountOut, 0, "Should allow small trades after TWAP period");
     }
 
@@ -291,7 +265,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             200e18,
-            100e18,  // 2:1 rate
+            100e18, // 2:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 200e18,
                 balanceOut: 100e18,
@@ -308,13 +282,11 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         // Test at start - should have minimal or no liquidity
         vm.warp(startTime + 1); // 1 second after start
 
-        try swapVM.asView().quote(
-            order,
-            address(tokenA),
-            address(tokenB),
-            2e18,
-            exactInData
-        ) returns (uint256, uint256 quotedOut, bytes32) {
+        try swapVM.asView().quote(order, address(tokenA), address(tokenB), 2e18, exactInData) returns (
+            uint256,
+            uint256 quotedOut,
+            bytes32
+        ) {
             assertLt(quotedOut, 1e18, "Should have minimal liquidity at start");
         } catch {
             // Expected - may revert with no liquidity
@@ -323,14 +295,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         // Test after TWAP ends
         vm.warp(startTime + duration + 1);
 
-        uint256 finalOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            20e18,
-            exactInData
-        );
+        uint256 finalOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 20e18, exactInData);
         assertGt(finalOut, 5e18, "Should have liquidity after TWAP");
     }
 
@@ -343,7 +308,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             2000e18,
-            1000e18,  // 2:1 rate
+            1000e18, // 2:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 2000e18,
                 balanceOut: 1000e18,
@@ -360,10 +325,10 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         uint256 totalOut = 0;
 
         // Execute larger trades to meet minimums
-        vm.warp(startTime + duration * 40 / 100); // 40% time
+        vm.warp(startTime + (duration * 40) / 100); // 40% time
         totalOut += _executeSwap(swapVM, order, address(tokenA), address(tokenB), 15e18, exactInData);
 
-        vm.warp(startTime + duration * 70 / 100); // 70% time
+        vm.warp(startTime + (duration * 70) / 100); // 70% time
         totalOut += _executeSwap(swapVM, order, address(tokenA), address(tokenB), 20e18, exactInData);
 
         vm.warp(startTime + duration + 1); // After TWAP
@@ -381,7 +346,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             1000e18,
-            1000e18,  // 1:1 rate
+            1000e18, // 1:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 1000e18,
                 balanceOut: 1000e18,
@@ -396,7 +361,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
         // Wait for more liquidity
-        vm.warp(startTime + duration * 30 / 100);
+        vm.warp(startTime + (duration * 30) / 100);
 
         // Execute larger trade to meet minimum
         uint256 firstOut = _executeSwap(
@@ -413,14 +378,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         // Test after TWAP ends for comparison
         vm.warp(startTime + duration + 1);
 
-        uint256 laterOut = _executeSwap(
-            swapVM,
-            order,
-            address(tokenA),
-            address(tokenB),
-            10e18,
-            exactInData
-        );
+        uint256 laterOut = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 10e18, exactInData);
 
         assertGt(laterOut, 0.0001e18, "Should get more output after TWAP");
     }
@@ -436,7 +394,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             2000e18,
-            totalBalance,  // 2:1 rate
+            totalBalance, // 2:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 2000e18,
                 balanceOut: totalBalance,
@@ -454,41 +412,41 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         uint256 cumulativeSold = 0;
 
         // Swap 1: At 20% time (200e18 unlocked)
-        vm.warp(startTime + duration * 20 / 100);
-        uint256 unlocked1 = totalBalance * 20 / 100; // 200e18
+        vm.warp(startTime + (duration * 20) / 100);
+        uint256 unlocked1 = (totalBalance * 20) / 100; // 200e18
 
         uint256 out1 = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 100e18, exactInData);
         cumulativeSold += out1;
 
         // Check stored state
-        (,, uint256 timestamp1, uint256 storedSold1) = swapVM.twapLastSwaps(orderHash);
+        (, , uint256 timestamp1, uint256 storedSold1) = swapVM.twapLastSwaps(orderHash);
         assertEq(storedSold1, cumulativeSold, "Swap 1: totalSold should equal first amountOut");
         assertEq(timestamp1, block.timestamp, "Swap 1: timestamp should be updated");
         assertLe(storedSold1, unlocked1, "Swap 1: totalSold should not exceed unlocked");
 
         // Swap 2: At 50% time (500e18 unlocked total)
-        vm.warp(startTime + duration * 50 / 100);
-        uint256 unlocked2 = totalBalance * 50 / 100; // 500e18
+        vm.warp(startTime + (duration * 50) / 100);
+        uint256 unlocked2 = (totalBalance * 50) / 100; // 500e18
 
         uint256 out2 = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 150e18, exactInData);
         cumulativeSold += out2;
 
         // Check state after second swap
-        (,, uint256 timestamp2, uint256 storedSold2) = swapVM.twapLastSwaps(orderHash);
+        (, , uint256 timestamp2, uint256 storedSold2) = swapVM.twapLastSwaps(orderHash);
         assertEq(storedSold2, cumulativeSold, "Swap 2: totalSold should be cumulative (sold1 + sold2)");
         assertEq(timestamp2, block.timestamp, "Swap 2: timestamp should be updated");
         assertLe(storedSold2, unlocked2, "Swap 2: totalSold should not exceed unlocked");
         assertGt(storedSold2, storedSold1, "Swap 2: totalSold should increase");
 
         // Swap 3: At 80% time (800e18 unlocked total)
-        vm.warp(startTime + duration * 80 / 100);
-        uint256 unlocked3 = totalBalance * 80 / 100; // 800e18
+        vm.warp(startTime + (duration * 80) / 100);
+        uint256 unlocked3 = (totalBalance * 80) / 100; // 800e18
 
         uint256 out3 = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 200e18, exactInData);
         cumulativeSold += out3;
 
         // Final check
-        (,, uint256 timestamp3, uint256 storedSold3) = swapVM.twapLastSwaps(orderHash);
+        (, , uint256 timestamp3, uint256 storedSold3) = swapVM.twapLastSwaps(orderHash);
         assertEq(storedSold3, cumulativeSold, "Swap 3: totalSold should be cumulative (all swaps)");
         assertEq(timestamp3, block.timestamp, "Swap 3: timestamp should be updated");
         assertLe(storedSold3, unlocked3, "Swap 3: totalSold should not exceed unlocked");
@@ -509,7 +467,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory bytecode = _createTWAPBytecode(
             200e18,
-            totalBalance,  // 2:1 rate
+            totalBalance, // 2:1 rate
             TWAPSwapArgsBuilder.TwapArgs({
                 balanceIn: 200e18,
                 balanceOut: totalBalance,
@@ -524,7 +482,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         bytes memory exactInData = _signAndPackTakerData(order, true, 0);
 
         // At 50% time: unlocked = 50e18
-        vm.warp(startTime + duration * 50 / 100);
+        vm.warp(startTime + (duration * 50) / 100);
 
         // First swap: buy 40e18 (should succeed)
         uint256 out1 = _executeSwap(swapVM, order, address(tokenA), address(tokenB), 100e18, exactInData);
@@ -546,7 +504,6 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         );
     }
 
-
     // Helper functions
     function _executeSwap(
         SwapVM _swapVM,
@@ -560,13 +517,7 @@ contract TWAPSwapTest is Test, OpcodesDebug {
         TokenMock(tokenIn).mint(taker, amount);
 
         // Execute the swap
-        (uint256 actualIn, uint256 actualOut,) = _swapVM.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            amount,
-            takerData
-        );
+        (uint256 actualIn, uint256 actualOut, ) = _swapVM.swap(order, tokenIn, tokenOut, amount, takerData);
 
         // Verify the swap consumed the expected input amount
         require(actualIn == amount, "Unexpected input amount consumed");
@@ -575,26 +526,29 @@ contract TWAPSwapTest is Test, OpcodesDebug {
     }
 
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -608,27 +562,29 @@ contract TWAPSwapTest is Test, OpcodesDebug {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

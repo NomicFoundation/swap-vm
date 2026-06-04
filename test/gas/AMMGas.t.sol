@@ -75,16 +75,15 @@ contract AMMGas is Test, OpcodesDebug {
         uint256 sqrtPmin,
         uint256 sqrtPmax
     ) internal view returns (uint256 balA, uint256 balB) {
-        (, uint256 actualLt, uint256 actualGt) =
-            XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
-                available, available, 1e18, sqrtPmin, sqrtPmax
-            );
-        (balA, balB) = address(tokenA) < address(tokenB)
-            ? (actualLt, actualGt)
-            : (actualGt, actualLt);
+        (, uint256 actualLt, uint256 actualGt) = XYCConcentrateArgsBuilder.computeLiquidityFromAmounts(
+            available,
+            available,
+            1e18,
+            sqrtPmin,
+            sqrtPmax
+        );
+        (balA, balB) = address(tokenA) < address(tokenB) ? (actualLt, actualGt) : (actualGt, actualLt);
     }
-
-
 
     // ==================== XYCSwap (Basic AMM) ====================
 
@@ -279,11 +278,10 @@ contract AMMGas is Test, OpcodesDebug {
     function _createXYCSwapOrder(bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
             program.build(_xycSwapXD)
         );
 
@@ -293,21 +291,20 @@ contract AMMGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createConcentrateGrowLiquidityOrder(bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createConcentrateGrowLiquidityOrder(
+        bool isExactIn
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         uint256 sqrtPmin = Math.sqrt(0.8e36);
         uint256 sqrtPmax = Math.sqrt(1.25e36);
         (uint256 balA, uint256 balB) = _concentrateBalances(BALANCE_A, sqrtPmin, sqrtPmax);
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balA, balB])
-                )),
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax)
-            )
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balA, balB]))
+            ),
+            program.build(_xycConcentrateGrowLiquidity2D, XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -316,21 +313,20 @@ contract AMMGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createConcentrateGrowPriceRangeOrder(bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createConcentrateGrowPriceRangeOrder(
+        bool isExactIn
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         uint256 sqrtPmin = Math.sqrt(0.7e36);
         uint256 sqrtPmax = Math.sqrt(1.4e36);
         (uint256 balA, uint256 balB) = _concentrateBalances(BALANCE_A, sqrtPmin, sqrtPmax);
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balA, balB])
-                )),
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax)
-            )
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balA, balB]))
+            ),
+            program.build(_xycConcentrateGrowLiquidity2D, XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -344,13 +340,11 @@ contract AMMGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
             program.build(_xycSwapXD)
         );
 
@@ -360,7 +354,9 @@ contract AMMGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createConcentrateDecayXYCSwapOrder(bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createConcentrateDecayXYCSwapOrder(
+        bool isExactIn
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         uint256 sqrtPmin = Math.sqrt(0.8e36);
         uint256 sqrtPmax = Math.sqrt(1.25e36);
         (uint256 balA, uint256 balB) = _concentrateBalances(BALANCE_A, sqrtPmin, sqrtPmax);
@@ -368,16 +364,12 @@ contract AMMGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balA, balB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax)
-            )
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balA, balB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
+            program.build(_xycConcentrateGrowLiquidity2D, XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -386,21 +378,24 @@ contract AMMGas is Test, OpcodesDebug {
         return (order, takerData);
     }
 
-    function _createXYCSwapWithFeeOrder(bool isFeeIn, bool isExactIn) private view returns (ISwapVM.Order memory, bytes memory) {
+    function _createXYCSwapWithFeeOrder(
+        bool isFeeIn,
+        bool isExactIn
+    ) private view returns (ISwapVM.Order memory, bytes memory) {
         uint32 feeBps = 100; // 1%
 
         Program memory program = ProgramBuilder.init(_opcodes());
 
-        bytes memory feeInstruction = isFeeIn ?
-            program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)) :
-            program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps));
+        bytes memory feeInstruction =
+            isFeeIn
+                ? program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps))
+                : program.build(_flatFeeAmountOutXD, FeeArgsBuilder.buildFlatFee(feeBps));
 
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([BALANCE_A, BALANCE_B])
-                )),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([BALANCE_A, BALANCE_B]))
+            ),
             feeInstruction,
             program.build(_xycSwapXD)
         );
@@ -420,17 +415,13 @@ contract AMMGas is Test, OpcodesDebug {
 
         Program memory program = ProgramBuilder.init(_opcodes());
         bytes memory bytecode = bytes.concat(
-            program.build(_dynamicBalancesXD,
-                BalancesArgsBuilder.build(
-                    dynamic([address(tokenA), address(tokenB)]),
-                    dynamic([balA, balB])
-                )),
-            program.build(_decayXD,
-                DecayArgsBuilder.build(decayPeriod)),
+            program.build(
+                _dynamicBalancesXD,
+                BalancesArgsBuilder.build(dynamic([address(tokenA), address(tokenB)]), dynamic([balA, balB]))
+            ),
+            program.build(_decayXD, DecayArgsBuilder.build(decayPeriod)),
             program.build(_flatFeeAmountInXD, FeeArgsBuilder.buildFlatFee(feeBps)),
-            program.build(_xycConcentrateGrowLiquidity2D,
-                XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax)
-            )
+            program.build(_xycConcentrateGrowLiquidity2D, XYCConcentrateArgsBuilder.build2D(sqrtPmin, sqrtPmax))
         );
 
         ISwapVM.Order memory order = _createOrder(bytecode);
@@ -440,26 +431,29 @@ contract AMMGas is Test, OpcodesDebug {
     }
 
     function _createOrder(bytes memory program) private view returns (ISwapVM.Order memory) {
-        return MakerTraitsLib.build(MakerTraitsLib.Args({
-            maker: maker,
-            shouldUnwrapWeth: false,
-            useAquaInsteadOfSignature: false,
-            allowZeroAmountIn: false,
-            receiver: address(0),
-            hasPreTransferInHook: false,
-            hasPostTransferInHook: false,
-            hasPreTransferOutHook: false,
-            hasPostTransferOutHook: false,
-            preTransferInTarget: address(0),
-            preTransferInData: "",
-            postTransferInTarget: address(0),
-            postTransferInData: "",
-            preTransferOutTarget: address(0),
-            preTransferOutData: "",
-            postTransferOutTarget: address(0),
-            postTransferOutData: "",
-            program: program
-        }));
+        return
+            MakerTraitsLib.build(
+                MakerTraitsLib.Args({
+                    maker: maker,
+                    shouldUnwrapWeth: false,
+                    useAquaInsteadOfSignature: false,
+                    allowZeroAmountIn: false,
+                    receiver: address(0),
+                    hasPreTransferInHook: false,
+                    hasPostTransferInHook: false,
+                    hasPreTransferOutHook: false,
+                    hasPostTransferOutHook: false,
+                    preTransferInTarget: address(0),
+                    preTransferInData: "",
+                    postTransferInTarget: address(0),
+                    postTransferInData: "",
+                    preTransferOutTarget: address(0),
+                    preTransferOutData: "",
+                    postTransferOutTarget: address(0),
+                    postTransferOutData: "",
+                    program: program
+                })
+            );
     }
 
     function _signAndPackTakerData(
@@ -473,27 +467,29 @@ contract AMMGas is Test, OpcodesDebug {
 
         bytes memory thresholdData = threshold > 0 ? abi.encodePacked(bytes32(threshold)) : bytes("");
 
-        bytes memory takerTraits = TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: address(0),
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: thresholdData,
-            to: address(this),
-            deadline: 0,
-            hasPreTransferInCallback: false,
-            hasPreTransferOutCallback: false,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: signature
-        }));
+        bytes memory takerTraits = TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: isExactIn,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: false,
+                threshold: thresholdData,
+                to: address(this),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: signature
+            })
+        );
 
         return abi.encodePacked(takerTraits);
     }

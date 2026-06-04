@@ -37,7 +37,7 @@ contract AquaSwapVMTest is AquaStrategyBuilders {
 
     constructor() AquaStrategyBuilders(address(aqua)) {}
 
-    function setUp() public override virtual {
+    function setUp() public virtual override {
         super.setUp();
 
         swapVM = _deployRouter();
@@ -53,24 +53,22 @@ contract AquaSwapVMTest is AquaStrategyBuilders {
     }
 
     // ===== HELPER FUNCTIONS =====
-    function getTokenPair(SwapProgram memory swapProgram)
-        internal
-        pure
-        returns (TokenMock tokenIn, TokenMock tokenOut)
-    {
-        return swapProgram.zeroForOne ?
-            (swapProgram.tokenA, swapProgram.tokenB) :
-            (swapProgram.tokenB, swapProgram.tokenA);
+    function getTokenPair(
+        SwapProgram memory swapProgram
+    ) internal pure returns (TokenMock tokenIn, TokenMock tokenOut) {
+        return
+            swapProgram.zeroForOne
+                ? (swapProgram.tokenA, swapProgram.tokenB)
+                : (swapProgram.tokenB, swapProgram.tokenA);
     }
 
-    function getTokenAddresses(SwapProgram memory swapProgram)
-        internal
-        pure
-        returns (address tokenIn, address tokenOut)
-    {
-        return swapProgram.zeroForOne ?
-            (address(swapProgram.tokenA), address(swapProgram.tokenB)) :
-            (address(swapProgram.tokenB), address(swapProgram.tokenA));
+    function getTokenAddresses(
+        SwapProgram memory swapProgram
+    ) internal pure returns (address tokenIn, address tokenOut) {
+        return
+            swapProgram.zeroForOne
+                ? (address(swapProgram.tokenA), address(swapProgram.tokenB))
+                : (address(swapProgram.tokenB), address(swapProgram.tokenA));
     }
 
     function getProtocolRecipientBalances() public view returns (uint256 balanceA, uint256 balanceB) {
@@ -78,71 +76,59 @@ contract AquaSwapVMTest is AquaStrategyBuilders {
         balanceB = tokenB.balanceOf(protocolFeeRecipient);
     }
 
-    function getAquaBalances(
-        bytes32 strategyHash
-    ) public view returns (uint256 balanceA, uint256 balanceB) {
+    function getAquaBalances(bytes32 strategyHash) public view returns (uint256 balanceA, uint256 balanceB) {
         return aqua.safeBalances(maker, address(swapVM), strategyHash, address(tokenA), address(tokenB));
     }
 
-    function getTakerBalances(
-        MockTaker _taker
-    ) public view returns (uint256 balanceA, uint256 balanceB) {
+    function getTakerBalances(MockTaker _taker) public view returns (uint256 balanceA, uint256 balanceB) {
         balanceA = tokenA.balanceOf(address(_taker));
         balanceB = tokenB.balanceOf(address(_taker));
     }
 
-    function mintTokenInToTaker(
-        SwapProgram memory swapProgram
-    ) public {
+    function mintTokenInToTaker(SwapProgram memory swapProgram) public {
         mintTokenInToTaker(swapProgram, swapProgram.amount);
     }
 
-    function mintTokenInToTaker(
-        SwapProgram memory swapProgram,
-        uint256 amount
-    ) public {
+    function mintTokenInToTaker(SwapProgram memory swapProgram, uint256 amount) public {
         (TokenMock tokenIn, ) = getTokenPair(swapProgram);
         tokenIn.mint(address(swapProgram.taker), amount);
     }
 
-    function mintTokenInToMaker(
-        SwapProgram memory swapProgram,
-        uint256 amount
-    ) public {
+    function mintTokenInToMaker(SwapProgram memory swapProgram, uint256 amount) public {
         (TokenMock tokenIn, ) = getTokenPair(swapProgram);
         tokenIn.mint(maker, amount);
     }
 
-    function mintTokenOutToMaker(
-        SwapProgram memory swapProgram,
-        uint256 amountOut
-    ) public {
+    function mintTokenOutToMaker(SwapProgram memory swapProgram, uint256 amountOut) public {
         (, TokenMock tokenOut) = getTokenPair(swapProgram);
         tokenOut.mint(maker, amountOut);
     }
 
     function takerData(address takerAddress, bool isExactIn) internal pure returns (bytes memory) {
-        return TakerTraitsLib.build(TakerTraitsLib.Args({
-            taker: takerAddress,
-            isExactIn: isExactIn,
-            shouldUnwrapWeth: false,
-            hasPreTransferInCallback: true,
-            hasPreTransferOutCallback: false,
-            isStrictThresholdAmount: false,
-            isFirstTransferFromTaker: false,
-            useTransferFromAndAquaPush: false,
-            threshold: "", // no minimum output
-            to: address(0),
-            deadline: 0,
-            preTransferInHookData: "",
-            postTransferInHookData: "",
-            preTransferOutHookData: "",
-            postTransferOutHookData: "",
-            preTransferInCallbackData: "",
-            preTransferOutCallbackData: "",
-            instructionsArgs: "",
-            signature: ""
-        }));
+        return
+            TakerTraitsLib.build(
+                TakerTraitsLib.Args({
+                    taker: takerAddress,
+                    isExactIn: isExactIn,
+                    shouldUnwrapWeth: false,
+                    hasPreTransferInCallback: true,
+                    hasPreTransferOutCallback: false,
+                    isStrictThresholdAmount: false,
+                    isFirstTransferFromTaker: false,
+                    useTransferFromAndAquaPush: false,
+                    threshold: "", // no minimum output
+                    to: address(0),
+                    deadline: 0,
+                    preTransferInHookData: "",
+                    postTransferInHookData: "",
+                    preTransferOutHookData: "",
+                    postTransferOutHookData: "",
+                    preTransferInCallbackData: "",
+                    preTransferOutCallbackData: "",
+                    instructionsArgs: "",
+                    signature: ""
+                })
+            );
     }
 
     function shipStrategy(
@@ -152,40 +138,21 @@ contract AquaSwapVMTest is AquaStrategyBuilders {
         uint256 balanceIn,
         uint256 balanceOut
     ) public returns (bytes32) {
-        return shipStrategy(
-            swapVM,
-            order,
-            tokenIn,
-            tokenOut,
-            balanceIn,
-            balanceOut
-        );
+        return shipStrategy(swapVM, order, tokenIn, tokenOut, balanceIn, balanceOut);
     }
 
-    function swap(
-        SwapProgram memory swapProgram,
-        ISwapVM.Order memory order
-    ) public returns (uint256, uint256) {
+    function swap(SwapProgram memory swapProgram, ISwapVM.Order memory order) public returns (uint256, uint256) {
         bytes memory sigAndTakerData = abi.encodePacked(takerData(address(swapProgram.taker), swapProgram.isExactIn));
         (address tokenIn, address tokenOut) = getTokenAddresses(swapProgram);
 
-        return swapProgram.taker.swap(
-            order,
-            tokenIn,
-            tokenOut,
-            swapProgram.amount,
-            sigAndTakerData
-        );
+        return swapProgram.taker.swap(order, tokenIn, tokenOut, swapProgram.amount, sigAndTakerData);
     }
 
-    function quote(
-        SwapProgram memory swapProgram,
-        ISwapVM.Order memory order
-    ) public view returns (uint256, uint256) {
+    function quote(SwapProgram memory swapProgram, ISwapVM.Order memory order) public view returns (uint256, uint256) {
         (address tokenIn, address tokenOut) = getTokenAddresses(swapProgram);
         bytes memory sigAndTakerData = abi.encodePacked(takerData(address(swapProgram.taker), swapProgram.isExactIn));
 
-        (uint256 amountIn, uint256 amountOut,) = swapVM.asView().quote(
+        (uint256 amountIn, uint256 amountOut, ) = swapVM.asView().quote(
             order,
             tokenIn,
             tokenOut,
@@ -201,7 +168,7 @@ contract AquaSwapVMTest is AquaStrategyBuilders {
         TokenMock token
     ) public returns (uint256 amountIn, uint256 amountOut) {
         bytes32 orderHash = swapVM.hash(order);
-        (uint256 aquaBalance,) = aqua.rawBalances(maker, address(swapVM), orderHash, address(token));
+        (uint256 aquaBalance, ) = aqua.rawBalances(maker, address(swapVM), orderHash, address(token));
 
         SwapProgram memory swapProgram = SwapProgram({
             amount: aquaBalance,
@@ -212,30 +179,21 @@ contract AquaSwapVMTest is AquaStrategyBuilders {
             tokenB: tokenB
         });
 
-        (amountIn, amountOut) = quote(
-            swapProgram,
-            order
-        );
+        (amountIn, amountOut) = quote(swapProgram, order);
 
         (TokenMock tokenIn, TokenMock tokenOut) = getTokenPair(swapProgram);
 
         tokenIn.mint(address(swapProgram.taker), amountIn);
         tokenOut.mint(maker, aquaBalance);
 
-        return swap(
-            swapProgram,
-            order
-        );
+        return swap(swapProgram, order);
     }
 
     function price(
         ISwapVM.Order memory order,
         SwapProgram memory swapProgram
     ) internal view returns (uint256, uint256 amountIn, uint256 amountOut) {
-        (amountIn, amountOut) = quote(
-            swapProgram,
-            order
-        );
+        (amountIn, amountOut) = quote(swapProgram, order);
         return ((amountOut * ONE) / amountIn, amountIn, amountOut);
     }
 }
